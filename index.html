@@ -304,7 +304,7 @@ const transfer=r=>r.st==='done'?r.sum:'';
 
 /* ---------- storage ---------- */
 let D;
-const newTpls=()=>[{id:uid(),name:'9-сынып · Физика · Ньютонның бірінші заңы',txt:NEWTON,kmzh:1},{id:uid(),name:'Бос шаблон: Басы · Ортасы · Соңы',txt:BLANK,kmzh:1}];
+const newTpls=()=>[{id:uid(),name:'9-сынып · Физика · Ньютонның бірінші заңы',txt:NEWTON,kmzh:1},{id:uid(),name:'Бос шаблон: 3 кезең',txt:BLANK,kmzh:1}];
 function blankDB(){return{v:3,kmzh:1,classes:[],lessons:[],templates:newTpls(),archive:[],ui:{sort:'list',view:'list',taskBy:{}}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('Сақталмады: браузер жады қолжетімсіз')}}
 function migrateOld(src){
@@ -321,7 +321,7 @@ function seedDemo(){const c={id:uid(),name:'Мысал · 9А',demo:true,student
 function upgrade(){ // v3 (4 stages) → new 3-stage templates first; old lessons keep their own stages
   if(D.kmzh)return;D.kmzh=1;D.templates.forEach(t=>{if(!/ескі/.test(t.name))t.name+=' (ескі, 4 кезең)'});
   D.templates=[...newTpls(),...D.templates];D.lessons.forEach(L=>L.stages.forEach(s=>s.tasks.forEach(t=>{if(!t.name)t.name='Тапсырма';if(t.full==null)t.full=''})))}
-function noKmzh(){if(D.noKmzh)return;D.noKmzh=1;D.templates.forEach(t=>{t.name=t.name.replace(/^ҚМЖ · /,'').replace(/^бос шаблон \(5\/35\/5\)$/,'Бос шаблон: Басы · Ортасы · Соңы')})}
+function noKmzh(){if(D.noKmzh)return;D.noKmzh=1;D.templates.forEach(t=>{t.name=t.name.replace(/^ҚМЖ · /,'').replace(/^бос шаблон \(5\/35\/5\)$/,'Бос шаблон: 3 кезең')})}
 function load(){let raw=null;try{raw=JSON.parse(localStorage.getItem(KEY))}catch(e){}
   if(raw&&raw.v===3&&Array.isArray(raw.classes)){D=raw;D.ui=D.ui||{};D.ui.taskBy=D.ui.taskBy||{};D.archive=D.archive||[];if(!D.templates||!D.templates.length)D.templates=newTpls();upgrade();noKmzh();save();return}
   D=blankDB();let old=null;try{old=JSON.parse(localStorage.getItem('ocenka_v2'))||JSON.parse(localStorage.getItem('ocenka_v1'))}catch(e){}
@@ -347,7 +347,7 @@ function order(){const c=C();if(!c)return[];const a=c.students.slice();if(D.ui.s
 /* ---------- ui helpers ---------- */
 let undoSt=[],openInfo=new Set(),openMore=false,kRow=0,rowIds=[],q='',listScroll=0;
 const isM=()=>innerWidth<900;
-const stS=s=>s.short!==s.name?s.short:s.name.replace(/^сабақтың\s+/i,'').replace(/^./,c=>c.toUpperCase());
+const stS=s=>s.name;
 function toast(m){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2300)}
 function modal(html,wide){$('md').className='md'+(wide?' wide':'');$('md').innerHTML=html;$('ov').hidden=false;$('md').scrollTop=0}
 function closeModal(){$('ov').hidden=true}
