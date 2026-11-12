@@ -380,7 +380,8 @@ function renderHome(c,L){const s=c&&L&&c.students.find(x=>x.id===D.ui.sid),st=L&
      ${L?`<div class="hbtns"><button data-act="results">Нәтижелер</button><button data-act="newLesson">Жаңа сабақ</button></div>`:''}</section>
    <section class="panel hc"><h2>Сынып</h2><div class="chips">${D.classes.map(k=>`<button class="${k===c?'on':''}" data-act="pickC" data-id="${k.id}" aria-pressed="${k===c}">${esc(k.name)} <span class="mut sm">${k.students.length}</span></button>`).join('')}</div>
      <div class="hbtns"><button data-act="classes">Оқушылар тізімі · импорт</button></div></section>
-   <section class="panel hc"><h2>Баптаулар</h2><div class="hbtns"><button data-act="templates">Шаблондар</button><button data-act="backup">Резервтік көшірме</button></div></section></div>`}
+   <section class="panel hc"><h2>Баптаулар</h2><div class="hbtns"><button data-act="templates">Шаблондар</button><button data-act="backup">Резервтік көшірме</button></div>
+     <div class="chips langs" style="margin-top:10px;align-items:center"><span class="mut sm">Тіл · Язык · Language</span>${[['kk','Қазақша'],['ru','Русский'],['en','English']].map(([k,n])=>`<button class="${(D.ui.lang||'kk')===k?'on':''}" data-act="lang" data-l="${k}" aria-pressed="${(D.ui.lang||'kk')===k}">${n}</button>`).join('')}</div></section></div>`}
 function renderTabs(L){const t=$('tabs'),cur=curStage(L);t.className='tabs'+(L.stages.length===4?' n4':'');
   t.innerHTML=L.stages.map(s=>{const m=sActMax(L,s);
     return `<button class="tab${s===cur?' on':''}" role="tab" data-stage="${s.id}" aria-selected="${s===cur}" title="${esc(s.name)}${s.time?' · '+s.time+' мин':''}"><b>${esc(stS(s))}</b><small>${L.skip[s.id]?'өткізілмеді':m?m+' балл':'баллсыз'}</small></button>`}).join('')}
@@ -410,7 +411,7 @@ function renderCard(c,L){const el=$('cardcol');rowIds=[];
   else if(!scoredT)h+=`<div class="nob">Балл қойылмайды</div>`;
   else{const m=L.marks[s.id]||{};
     t.descs.forEach(d=>{const v=m[d.id];rowIds.push(d.id);const k=rowIds.length-1,op=openInfo.has(d.id);
-      h+=`<div class="drow${k===kRow?' kf':''}"><div class="dt"><span>${esc(d.t)}<span class="ds${v!=null?' set':''}">${v!=null?`Белгіленді: ${v}`:'Белгіленбеген'}</span></span>
+      h+=`<div class="drow${k===kRow?' kf':''}"><div class="dt"><span><span class="dtx">${esc(d.t)}</span><span class="ds${v!=null?' set':''}">${v!=null?`Белгіленді: ${v}`:'Белгіленбеген'}</span></span>
         <button class="ii" data-info="${d.id}" aria-expanded="${op}" aria-label="Деңгейлердің сипаттамасы" title="Деңгейлер">i</button></div>
         <div class="lvs" role="group" aria-label="Деңгей">${d.levels.map(l=>`<button class="lv${v===l.v?' on':''}" data-lv="${d.id}" data-v="${l.v}" aria-pressed="${v===l.v}" title="${esc(l.txt)}">${l.v}</button>`).join('')}
         <button class="clr" data-clr="${d.id}" title="Белгіні алу" aria-label="Белгіні алу"${v==null?' disabled':''}>×</button></div>
@@ -569,8 +570,9 @@ ACT.xls=()=>{if(!window.XLSX)return toast('Excel жүктелмеді: инте�
   const aoa=[['Сынып',c.name],['Күні',fmtD(L.date)],['Максимум',lMax(L)],[],
     ['№','Аты-жөні','Мәртебе',...st.map(s=>`${s.short} (${sActMax(L,s)})`),'BilimClass үшін балл','Жиналған балл (жобаны қоса)','Кері байланыс']];
   c.students.forEach((s,i)=>{const r=res(L,s.id);aoa.push([i+1,s.n,ST_L[r.st],...st.map(x=>{const q=sRes(L,s.id,x);return q.n?q.sum:''}),transfer(r),r.n?r.sum:'',L.fb[s.id]||''])});
+  aoa.forEach((r,i)=>{if(i<6)r.forEach((c,j)=>{if(typeof c==='string'&&!(i<4&&j===1))r[j]=trS(c)});else r[2]=trS(r[2])});
   const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:5},{wch:32},{wch:14},...st.map(()=>({wch:14})),{wch:12},{wch:14},{wch:40}];
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Нәтижелер');
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,trS('Нәтижелер'));
   saveFile(`Нәтижелер_${c.name}_${fmtD(L.date)}.xlsx`.replace(/[\\/:*?"<>|]/g,'_'),XLSX.write(wb,{type:'array',bookType:'xlsx'}),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')};
 
 /* classes & import */
@@ -658,10 +660,101 @@ async function restore(e){const f=e.target.files[0];if(!f)return;e.target.value=
     if(!await ask('Көшірмеден қалпына келтіру керек пе?','Осы құрылғыдағы деректер файлдағы деректермен ауыстырылады.','Қалпына келтіру'))return;
     if(x.v===3&&Array.isArray(x.classes)){D=x;D.ui=D.ui||{};D.ui.taskBy=D.ui.taskBy||{};upgrade()}else{const keep=D;D=blankDB();if(!migrateOld(x)){D=keep;throw 0}}
     save();render();toast('Деректер қалпына келтірілді')}catch(err){toast('Бұл көшірме файлы емес')}}
+/* ---------- i18n: kk (source) → ru / en, applied to UI text only ---------- */
+const I18=[
+['⌂ Басты','⌂ Главная','⌂ Home'],['Басты мәзір','Главное меню','Main menu'],['Басты','Главная','Home'],
+['Бағалауды жалғастыру','Продолжить оценивание','Continue grading'],
+['BilimClass үшін нәтижелер','Итоги для BilimClass','Results for BilimClass'],['Нәтижелерге оралу','Назад к итогам','Back to results'],['Нәтижелер','Итоги','Results'],
+['Жаңа сабақ','Новый урок','New lesson'],['Сабақ құру','Создать урок','Create lesson'],['Сабақ құрылды','Урок создан','Lesson created'],
+['Сынып құру','Создать класс','Create class'],['Сыныптар мен тізімдер','Классы и списки','Classes and lists'],['Сынып','Класс','Class'],
+['Оқушылар тізімі · импорт','Список учеников · импорт','Student list · import'],['Оқушылар тізімі','Список учеников','Student list'],['Оқушыны іздеу','Поиск ученика','Search student'],['Оқушылар','Ученики','Students'],
+['Баптаулар','Настройки','Settings'],['Шаблондар','Шаблоны','Templates'],['Шаблон ретінде сақтау','Сохранить как шаблон','Save as template'],['Жаңа шаблон ретінде көшіру','Копировать как новый шаблон','Copy as new template'],['Шаблонды өшіру керек пе?','Удалить шаблон?','Delete template?'],['Шаблонды өшіру','Удалить шаблон','Delete template'],['Шаблон сақталды','Шаблон сохранён','Template saved'],['Шаблон','Шаблон','Template'],
+['Бос шаблон','Пустой шаблон','Blank template'],['физика мысалы','пример по физике','physics example'],['ескі','старый','old'],
+['Резервтік көшірме','Резервная копия','Backup'],['Күні','Дата','Date'],['Тізім бойынша','По списку','By list'],
+['Жұмыс экранындағы рет. Нәтижелерге әсер етпейді','Порядок на рабочем экране. На итоги не влияет','Order on the work screen. Does not affect results'],
+['Сабақ кезеңдері','Этапы урока','Lesson stages'],
+['Алдыңғы тақырыпты байланыстыру','Связь с предыдущей темой','Link to the previous topic'],['Жаңа тақырыпқа өту','Переход к новой теме','Moving to the new topic'],
+['Жаңа тақырыпты талқылау','Обсуждение новой темы','Discussing the new topic'],['Бекіту','Закрепление','Consolidation'],
+['Сабақтың басы','Начало урока','Lesson start'],['Сабақтың ортасы','Середина урока','Lesson middle'],['Сабақтың соңы','Конец урока','Lesson end'],
+['Балл қойылмайды: кезең осы сабақта өткізілмеді','Баллы не ставятся: этап на этом уроке не проводился','No points: this stage was not held in this lesson'],
+['Балл қойылмайды','Баллы не ставятся','No points for this stage'],['баллсыз','без баллов','no points'],['балл','б.','pts'],['Балл','Балл','Score'],
+['Келесі тексерілмеген','Следующий непроверенный','Next unchecked'],['Келесі →','Следующий →','Next →'],
+['Тексерілмеген','Не проверен','Not checked'],['тексерілмеген','не проверены','not checked'],['Тексерілді','Проверено','Checked'],['тексерілді','проверено','checked'],
+['Жоба','Черновик','Draft'],['жоба','черновик','draft'],
+['Келмеді деп белгіленген. Белгілер қорытындыға кірмейді.','Отмечен как отсутствующий. Отметки не входят в итог.','Marked absent. Marks are not counted.'],
+['Келмеді','Отсутствовал','Absent'],['келмеді','отсутствовали','absent'],['Келді','Присутствует','Present'],
+['Кезең өткізілмеді ме?','Этап не проводился?','Stage not held?'],['Кезең өткізілмеді','Этап не проводился','Stage not held'],['өткізілмеді','не проводился','not held'],['Кезеңді қайтару','Вернуть этап','Restore stage'],
+['осы сабақтың максимумына және барлық оқушының мәртебесіне кірмейді. Қойылған белгілер сақталады.','не войдёт в максимум и статусы учеников этого урока. Поставленные отметки сохранятся.','will not count toward this lesson’s maximum or student statuses. Existing marks are kept.'],
+['Кезеңдер бойынша','По этапам','By stage'],['кезеңдер бойынша','по этапам','by stage'],['Кезеңдер мен дескрипторлар','Этапы и дескрипторы','Stages and descriptors'],['Кезеңдер','Этапы','Stages'],['Кезең','Этап','Stage'],['кезең','этапа','stages'],
+['Осы сабақтың кезеңдері мен дескрипторлары','Этапы и дескрипторы этого урока','Stages and descriptors of this lesson'],
+['Қосымша: кері байланыс, келмеді','Ещё: обратная связь, отсутствие','More: feedback, absence'],
+['Кері байланыс (міндетті емес). Ауызша берсеңіз, бос қалдырыңыз','Обратная связь (необязательно). Если устно — оставьте пустым','Feedback (optional). Leave empty if given orally'],['Кері байланыс','Обратная связь','Feedback'],
+['Пернелер: Tab / Enter · ↑↓ дескриптор · 0–9 деңгей · Del белгіні алу · → / N келесі · Shift+N тексерілмеген · ← алдыңғы · [ ] кезең · Ctrl+Z болдырмау · / іздеу',
+ 'Клавиши: Tab / Enter · ↑↓ дескриптор · 0–9 уровень · Del снять · → / N следующий · Shift+N непроверенный · ← предыдущий · [ ] этап · Ctrl+Z отменить · / поиск',
+ 'Keys: Tab / Enter · ↑↓ descriptor · 0–9 level · Del clear · → / N next · Shift+N unchecked · ← previous · [ ] stage · Ctrl+Z undo · / search'],
+['Соңғы әрекетті болдырмау','Отменить последнее действие','Undo last action'],['Болдыратын әрекет жоқ','Нечего отменять','Nothing to undo'],['Болдырылмады','Отменено','Undone'],['Болдырмау','Отменить','Undo'],
+['Белгіні алу','Снять отметку','Clear mark'],['Деңгейлердің сипаттамасы','Описание уровней','Level descriptions'],['Деңгейлер','Уровни','Levels'],['Деңгей','Уровень','Level'],['Мұндай деңгей жоқ','Нет такого уровня','No such level'],
+['Белгіленбеген','Не отмечено','Not marked'],['Белгіленді','Отмечено','Marked'],['Сабақтың қорытындысы','Итог урока','Lesson total'],['Қорытынды 0 — тексеріңіз','Итог 0 — проверьте','Total 0 — please check'],['Қорытынды','Итог','Total'],
+['Мәртебе','Статус','Status'],['«Аты-жөні + балл» көшіру','Копировать «ФИО + балл»','Copy “Name + score”'],['Аты-жөні қайталанатын жолдар','Повторяющиеся ФИО','Duplicate names'],['Аты-жөні табылмады','Имён не найдено','No names found'],['Аты-жөні','ФИО','Name'],
+['Баллдарды бағанмен көшіру','Копировать баллы столбцом','Copy scores as a column'],
+['Рет — сыныптың бастапқы тізімі бойынша. Журналға жазылатын балл тек тексерілген оқушыларда бар. Жоба, тексерілмеген және келмеген оқушыларда бос. BilimClass-та аты-жөнін салыстырып шығыңыз.',
+ 'Порядок — как в исходном списке класса. Балл для журнала есть только у проверенных. У черновиков, непроверенных и отсутствующих поле пустое. Сверьте ФИО в BilimClass.',
+ 'Order follows the original class list. Only checked students get a score for the journal. Drafts, unchecked and absent students stay empty. Check the names in BilimClass.'],
+['оқушының қорытындысы 0. Журналға жазбас бұрын тексеріңіз.','уч. с итогом 0. Проверьте перед переносом в журнал.','students have a total of 0. Check before entering it in the journal.'],
+['Жабу','Закрыть','Close'],['Бас тарту','Отмена','Cancel'],['Иә','Да','Yes'],['Сақтау','Сохранить','Save'],['Сақталды','Сохранено','Saved'],['Артқа','Назад','Back'],['Атауы','Название','Name'],['Өшіру','Удалить','Delete'],
+['Жаңа сынып','Новый класс','New class'],['Мысалы, 9Ә','Например, 9Ә','For example, 9A'],['Ағымдағыны қайта атау','Переименовать текущий','Rename current'],['Сыныпты өшіру','Удалить класс','Delete class'],['Сабақты өшіру керек пе?','Удалить урок?','Delete lesson?'],['Сабақты өшіру','Удалить урок','Delete lesson'],
+['сыныбын өшіру керек пе?','— удалить класс?','— delete this class?'],
+['Оқушылар тізімі мен осы сыныптың барлық сабақтары өшеді. Алдымен резервтік көшірме жасауға болады.','Список учеников и все уроки этого класса удалятся. Сначала можно сделать резервную копию.','The student list and all lessons of this class will be deleted. You can make a backup first.'],
+['Осы сабақтың барлық белгілері өшеді.','Все отметки этого урока удалятся.','All marks of this lesson will be deleted.'],
+['Excel / Word жүктеу','Загрузить Excel / Word','Upload Excel / Word'],['Excel жүктелмеді: интернет керек','Excel не загрузился: нужен интернет','Excel did not load: internet needed'],
+['Немесе BilimClass-тан көшірілген тізімді қойыңыз / қолмен жазыңыз (бір жолға бір оқушы)','Или вставьте список из BilimClass / введите вручную (один ученик на строку)','Or paste the list from BilimClass / type it in (one student per line)'],
+['Алдын ала қарау','Предпросмотр','Preview'],['Жаңа тізімде','В новом списке','In the new list'],['оқушы · бұрынғымен сәйкес','уч. · совпали с текущими','students · matched'],['оқушы','уч.','students'],['жаңа','новых','new'],
+['тізімнен шығады','уйдут из списка','removed from the list'],['(өткен сабақтардағы белгілері сақталады)','(их отметки в прошлых уроках сохранятся)','(their marks in past lessons are kept)'],
+['Әрқайсысы жеке оқушы ретінде сақталады.','Каждый сохранится как отдельный ученик.','Each is saved as a separate student.'],
+['Төмендегі рет BilimClass үшін нәтижелердің реті болады.','Этот порядок станет порядком итогов для BilimClass.','This order will be the order of the BilimClass results.'],
+['Тізімді сақтау','Сохранить список','Save list'],['Тізім сақталды','Список сохранён','List saved'],['Тізім қосу','Добавить список','Add a list'],
+['Сабақтың негізі','Основа урока','Lesson based on'],['Бос сабақ: баллды өзім қоямын','Пустой урок: баллы задаю сам','Blank lesson: I set the points'],['Көшірме әлі сақталмаған.','Копию ещё не сохраняли.','No backup saved yet.'],['Көшірмені сақтау','Сохранить копию','Save backup'],['Соңғы көшірме','Последняя копия','Last backup'],['Көшірме','Копия','Copy'],['Көшірілді','Скопировано','Copied'],['Қолмен көшіріңіз','Скопируйте вручную','Copy manually'],
+['Әр кезеңге қанша балл','Сколько баллов на каждый этап','Points for each stage'],
+['Әр 2 балл — бір дескриптор (0 / 1 / 2). Тақ сан болса, соңғы дескриптор 0 / 1. 0 балл — кезең баллсыз.','Каждые 2 балла — один дескриптор (0 / 1 / 2). При нечётном числе последний — 0 / 1. 0 баллов — этап без баллов.','Every 2 points = one descriptor (0 / 1 / 2). With an odd number the last one is 0 / 1. 0 points = a stage without points.'],
+['Кемінде бір кезеңге балл қойыңыз','Поставьте баллы хотя бы одному этапу','Set points for at least one stage'],
+['Сабаққа барлығы','Всего за урок','Lesson total'],['Барлығы','Всего','Total'],['Сабаққа қолдану','Применить к уроку','Apply to the lesson'],
+['Шаблондағы өзгеріс тек жаңа сабақтарға қолданылады. Сақталған сабақтар өз критерийлерін сақтайды.','Изменения шаблона применяются только к новым урокам. Сохранённые уроки сохраняют свои критерии.','Template changes apply only to new lessons. Saved lessons keep their criteria.'],
+['Қалай жазу керек','Как записывать','How to write'],['Сабақтар тарихы','История уроков','Lesson history'],['Әзірге сабақ жоқ.','Уроков пока нет.','No lessons yet.'],
+['Алдыңғы нұсқадағы баллдар (қайта есептелмеген)','Баллы из предыдущей версии (без пересчёта)','Scores from the previous version (not recalculated)'],
+['Файлдан қалпына келтіру','Восстановить из файла','Restore from file'],['Көшірмеден қалпына келтіру керек пе?','Восстановить из копии?','Restore from backup?'],['Қалпына келтіру','Восстановить','Restore'],
+['Осы құрылғыдағы деректер файлдағы деректермен ауыстырылады.','Данные на этом устройстве заменятся данными из файла.','Data on this device will be replaced with the data from the file.'],
+['Барлық сынып, сабақ, белгі және шаблон бір файлға сақталады. Файлды WhatsApp-қа немесе Google Drive-қа жіберіп қойыңыз. Сол арқылы деректерді басқа телефонға көшіруге немесе браузер тазаланғаннан кейін қалпына келтіруге болады.',
+ 'Все классы, уроки, отметки и шаблоны сохраняются в один файл. Отправьте его себе в WhatsApp или на Google Диск: так данные можно перенести на другой телефон или восстановить после очистки браузера.',
+ 'All classes, lessons, marks and templates are saved to one file. Send it to yourself via WhatsApp or Google Drive to move the data to another phone or restore it after clearing the browser.'],
+['Деректер қалпына келтірілді','Данные восстановлены','Data restored'],['Бұл көшірме файлы емес','Это не файл копии','This is not a backup file'],
+['Файл «Жүктеулер» қалтасына сақталды','Файл сохранён в «Загрузки»','File saved to Downloads'],['Файл сақталды','Файл сохранён','File saved'],['Мұнда файлды сақтау мүмкін болмады','Здесь не удалось сохранить файл','Could not save the file here'],
+['Файл оқылмады. Оны .xlsx немесе .docx түрінде сақтаңыз','Файл не прочитан. Сохраните его как .xlsx или .docx','Could not read the file. Save it as .xlsx or .docx'],
+['Тізім соңы, қайтадан бірінші оқушы','Конец списка, снова первый ученик','End of the list, back to the first student'],
+['Бұл кезең бойынша барлық оқушы тексерілді','На этом этапе проверены все ученики','All students are checked for this stage'],['Бұл кезеңде балл жоқ','На этом этапе нет баллов','This stage has no points'],
+['Сынып құрылды. Оқушылар тізімін қосыңыз','Класс создан. Добавьте список учеников','Class created. Add the student list'],['Сыныптың атауын жазыңыз','Введите название класса','Enter a class name'],
+['Жаңа атауды «Жаңа сынып» жолына жазыңыз','Впишите новое название в поле «Новый класс»','Type the new name in the “New class” field'],
+['Алдымен сабақ құрыңыз','Сначала создайте урок','Create a lesson first'],['Бұл сыныпта әзірге сабақ жоқ.','В этом классе пока нет урока.','No lessons in this class yet.'],['Алдымен сынып құрыңыз.','Сначала создайте класс.','Create a class first.'],
+['Тізімнен оқушыны таңдаңыз','Выберите ученика','Choose a student'],['Ешкім табылмады','Никого не нашли','No one found'],['Сыныпта оқушы жоқ.','В классе нет учеников.','No students in this class.'],
+['Ойдан шығарылған оқушылармен мысал. Өз сыныбыңыз: ⌂ Басты → Оқушылар тізімі.','Пример с вымышленными учениками. Свой класс: ⌂ Главная → Список учеников.','Example with fictional students. Your own class: ⌂ Home → Student list.'],
+['Осы шаблонмен құрылған сабақтар өзгермейді.','Уроки по этому шаблону не изменятся.','Lessons made from this template will not change.'],
+['Тіл','Язык','Language'],['дескриптор','дескриптор','descriptor'],['максимум','максимум','max']];
+let LANG='kk';const RX=I18.slice().sort((a,b)=>b[0].length-a[0].length).map(r=>[new RegExp('(?<![\\p{L}\\p{N}])'+r[0].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?![\\p{L}])','gu'),r]);
+function trS(t){if(LANG==='kk'||!t||typeof t!=='string')return t;const i=LANG==='ru'?1:2;for(const [re,r] of RX)if(t.includes(r[0]))t=t.replace(re,r[i]);return t}
+const TR_SKIP='textarea,script,style,.dtx,.tn,.chd h2,.lvtxt,.phr,.langs';const TR_AT=['placeholder','title','aria-label'];
+function trEl(el){if(!el||el.nodeType!==1||el.closest(TR_SKIP))return;for(const a of TR_AT){const v=el.getAttribute(a);if(v){const n=trS(v);if(n!==v)el.setAttribute(a,n)}}}
+function trNode(root){if(LANG==='kk'||!root)return;
+  if(root.nodeType===3){if(root.parentElement&&!root.parentElement.closest(TR_SKIP)){const n=trS(root.nodeValue);if(n!==root.nodeValue)root.nodeValue=n}return}
+  if(root.nodeType!==1)return;if(root.closest(TR_SKIP))return;trEl(root);root.querySelectorAll('[placeholder],[title],[aria-label]').forEach(trEl);
+  const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement.closest(TR_SKIP)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});let n;
+  while(n=tw.nextNode()){const v=trS(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v}}
+function startI18n(){LANG=['ru','en'].includes(D.ui.lang)?D.ui.lang:'kk';document.documentElement.lang=LANG;if(LANG==='kk')return;
+  new MutationObserver(ms=>{for(const m of ms){if(m.type==='attributes')trEl(m.target);else m.addedNodes.forEach(trNode)}})
+    .observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:TR_AT});trNode(document.body)}
+ACT.lang=t=>{D.ui.lang=t.dataset.l;save();location.reload()};
 const _nl=ACT.nlCreate;ACT.nlCreate=()=>{_nl();if(!$('ov').hidden)return;D.ui.screen='work';D.ui.view='list';save();render();scrollTo(0,0)};
 ACT.menu=goHome;
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 addEventListener('resize',()=>{if(!$('top').hidden)document.documentElement.style.setProperty('--toph',$('top').offsetHeight+'px')});
-load();if(Lz()&&D.ui.screen!=='home'){D.ui.screen='work';if(isM())D.ui.view='list'}render();
+load();startI18n();if(Lz()&&D.ui.screen!=='home'){D.ui.screen='work';if(isM())D.ui.view='list'}render();
 if(D.ui.migrated===1){D.ui.migrated=2;save();toast('Сынып тізімдері көшірілді. Ескі баллдар — «Сабақтар тарихында»')}
 </script>
