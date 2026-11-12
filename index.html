@@ -67,7 +67,8 @@ td.p{color:var(--mut);text-align:right;width:60px}
 </style>
 
 <header class="wrap">
-  <div class="hrow"><h1>Баллы на уроке</h1><span class="sum" id="sum"></span></div>
+  <div class="hrow"><h1>Баллы на уроке</h1><button id="bCls">🏫 <span id="clsName"></span> ▾</button></div>
+  <div class="sum"><span id="sum"></span> <span id="cloud"></span></div>
   <div class="tools">
     <label class="btn pri">📂 Загрузить список<input type="file" id="file" accept=".xlsx,.xls,.csv,.docx,.txt"></label>
     <button id="bNames">✏️ Ученики</button>
@@ -126,6 +127,17 @@ td.p{color:var(--mut);text-align:right;width:60px}
   <div class="row"><button class="pri" data-close>Закрыть</button></div>
 </div></div>
 
+<div class="ov" id="ovK" hidden><div class="md">
+  <h2>Классы</h2>
+  <p class="hint">Нажмите на класс, чтобы открыть его. У каждого класса свой список учеников и свои баллы. Чтобы загрузить список, создайте класс, откройте его и нажмите «Загрузить список».</p>
+  <div id="kList"></div>
+  <label class="fl" style="margin-top:12px">Новый класс
+    <input type="text" id="kNew" placeholder="Например, 7А" style="width:100%;font:inherit;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)">
+  </label>
+  <div class="row"><button id="kRen">Переименовать текущий</button><button class="pri" id="kAdd">Создать класс</button></div>
+  <div class="row"><button data-close>Закрыть</button></div>
+</div></div>
+
 <div class="ov" id="ovQ" hidden><div class="md">
   <h2 id="qT"></h2><p class="hint" id="qM"></p>
   <div class="row"><button id="qNo">Отмена</button><button class="pri" id="qYes">Да</button></div>
@@ -139,8 +151,22 @@ let S={students:[],max:10,mode:'10',thr:[{g:'5',min:9},{g:'4',min:7},{g:'3',min:
 const DEMO=['Ахметов Арман','Бекова Айгерим','Жумабаев Нурлан','Касымова Дана','Сериков Алихан','Тулегенова Мадина'];
 let cur=-1,demo=false;
 try{const d=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('ocenka_v1'));if(d&&d.desc)S=Object.assign(S,d)}catch(e){}
-if(!S.students.length){demo=true;S.students=DEMO.map(n=>({n,c:{}}))}
-const save=()=>{if(demo)return;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+function link(){
+  if(!S.classes){S.classes={'Мой класс':S.students||[]};S.cls='Мой класс'}
+  if(!S.classes[S.cls]){S.cls=Object.keys(S.classes)[0];if(!S.cls){S.cls='Мой класс';S.classes[S.cls]=[]}}
+  S.students=S.classes[S.cls]}
+link();
+if(Object.values(S.classes).every(a=>!a.length)){demo=true;S.students=DEMO.map(n=>({n,c:{}}))}
+let ref=null,pushT=0;
+const push=()=>{if(!ref)return;clearTimeout(pushT);pushT=setTimeout(()=>{const {students,...rest}=S;
+  ref.set({v:JSON.stringify(rest)}).then(()=>$('cloud').textContent='☁️ сохранено в аккаунте').catch(()=>$('cloud').textContent='⚠️ сохранено только на этом устройстве')},1200)};
+const save=()=>{if(demo)return;S.t=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}push()};
+(async()=>{try{if(!window.claude?.use)return;const [d,u]=await Promise.all([claude.use('db'),claude.use('user')]);if(!d||!u)return;
+  ref=d.doc('data/users/'+(await u.id())+'/state');const sn=await ref.get();
+  if(sn.exists){const x=JSON.parse(sn.data().v);if((x.t||0)>(S.t||0)){S=Object.assign(S,x);link();demo=false;
+    try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}render()}else if(!demo)push()}
+  else if(!demo)push();
+  $('cloud').textContent='☁️ сохраняется в аккаунте'}catch(e){}})();
 const total=s=>Math.min(S.max||Infinity,S.desc.reduce((a,d,i)=>a+(s.c[i]||0)*d.p,0));
 function grade(s){const t=total(s);if(!t||S.mode==='raw')return '';const r=t/(S.max||1);
   if(S.mode==='custom'){const h=[...S.thr].sort((a,b)=>b.min-a.min).find(x=>t>=x.min);return h?h.g:''}
@@ -155,7 +181,7 @@ function ask(t,m){return new Promise(res=>{$('qT').textContent=t;$('qM').textCon
   $('qYes').onclick=()=>{$('ovQ').hidden=true;res(true)};$('qNo').onclick=()=>{$('ovQ').hidden=true;res(false)}})}
 
 function render(){
-  const g=$('grid'),done=S.students.filter(s=>total(s)).length;
+  const g=$('grid'),done=S.students.filter(s=>total(s)).length;$('clsName').textContent=S.cls;
   $('sum').textContent=S.students.length?`Оценено ${done} из ${S.students.length}`:'';
   if(!S.students.length){g.innerHTML='<div class="empty">Список пуст. Загрузите учеников из Excel или Word<br>или введите вручную.</div>';return}
   g.innerHTML=(demo?'<div class="empty" style="grid-column:1/-1;padding:4px 0 6px">Это пример класса. Загрузите свой список, и пример исчезнет.</div>':'')+
@@ -176,7 +202,18 @@ document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOv()});
 
 function setNames(names){const old={};if(!demo)S.students.forEach(s=>old[s.n]=s.c);demo=false;
-  S.students=names.map(n=>({n,c:old[n]||{}}));save();render()}
+  S.students=S.classes[S.cls]=names.map(n=>({n,c:old[n]||{}}));save();render()}
+function drawK(){$('kList').innerHTML=Object.keys(S.classes).map(n=>`<div class="ds"><button class="add" data-k="${esc(n)}"><span>${n===S.cls?'✓ ':''}${esc(n)}</span><i style="color:var(--mut)">${S.classes[n].length} уч.</i></button><button class="minus" data-kdel="${esc(n)}" aria-label="Удалить класс">×</button></div>`).join('')}
+$('bCls').onclick=()=>{$('kNew').value='';drawK();show('ovK')};
+$('kList').addEventListener('click',async e=>{const o=e.target.closest('[data-k]'),d=e.target.closest('[data-kdel]');
+  if(o){S.cls=o.dataset.k;link();demo=false;save();render();closeOv()}
+  if(d){const n=d.dataset.kdel;$('ovK').hidden=true;
+    if(await ask(`Удалить класс «${n}»?`,'Список учеников и баллы этого класса удалятся.')){delete S.classes[n];link();demo=false;save();render()}
+    drawK();show('ovK')}});
+$('kAdd').onclick=()=>{const n=$('kNew').value.trim();if(!n)return toast('Введите название класса');if(S.classes[n])return toast('Такой класс уже есть');
+  S.classes[n]=[];S.cls=n;link();demo=false;save();render();closeOv();toast(`Класс «${n}» создан. Загрузите список учеников`)};
+$('kRen').onclick=()=>{const n=$('kNew').value.trim();if(!n)return toast('Впишите новое название в поле выше');if(S.classes[n])return toast('Такой класс уже есть');
+  S.classes[n]=S.classes[S.cls];delete S.classes[S.cls];S.cls=n;link();demo=false;save();render();drawK();toast('Переименовано')};
 const HEAD=/^(№|n|no|фио|ф\.и\.о\.?|имя|ученик|ученики|фамилия|аты-жөні|аты жөні|оқушы|список.*|класс.*)$/i,LET=/[a-zа-яёәіңғүұқөһ]/i;
 function clean(arr){const out=[];arr.forEach(x=>{x=String(x).trim().replace(/^\d+[\.\)]?\s*/,'').replace(/\s+/g,' ');
   if(x&&LET.test(x)&&x.length<70&&!HEAD.test(x)&&!out.includes(x))out.push(x)});return out}
