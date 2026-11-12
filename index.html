@@ -7,319 +7,611 @@
 <body>
 <title>Баллы на уроке</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manrope:wght@700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <style>
-/* Layout: sticky top bar, student tile grid, bottom-sheet for descriptors, bottom action bar on phones */
-:root{--bg:#f3f5f9;--card:#fff;--tx:#18202e;--mut:#667085;--ac:#2563c9;--acs:#e8effb;--ok:#15803d;--bad:#c53030;--bd:#dce2ec;--sh:#0b1220;
---fd:'Manrope',system-ui,sans-serif;--fb:'Inter',system-ui,Segoe UI,Arial,sans-serif}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f141c;--card:#18202b;--tx:#e8edf5;--mut:#98a2b3;--ac:#6ea3ff;--acs:#1c2b44;--ok:#4ade80;--bad:#f87171;--bd:#2a3442;--sh:#000;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0f141c;--card:#18202b;--tx:#e8edf5;--mut:#98a2b3;--ac:#6ea3ff;--acs:#1c2b44;--ok:#4ade80;--bad:#f87171;--bd:#2a3442;--sh:#000;color-scheme:dark}
+/* Layout: sticky top bar (class/date/topic/Итоги) + stage tabs; desktop = student list left, card right; phone = list or card with sticky name and bottom navigation */
+:root{--bg:#eef1f5;--card:#fff;--tx:#16202c;--mut:#5b6878;--line:#d8dee6;--ac:#1f5fd1;--acs:#e7eefb;
+--ok:#16733a;--oks:#e3f3e8;--warn:#8a5300;--warns:#fff2dc;--bad:#b42318;--bads:#fdecea;
+--f:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color-scheme:light;--toph:0px}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0}
-body{background:var(--bg);color:var(--tx);font-family:var(--fb);font-size:15px;-webkit-tap-highlight-color:transparent}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
-.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--card);border-bottom:1px solid var(--bd);padding-block:10px}
-.hrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-h1{font-family:var(--fd);font-size:19px;margin:0;flex:1;min-width:0;text-wrap:balance}
-.sum{color:var(--mut);font-size:13px}
-button,label.btn{font:inherit;font-weight:600;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:10px 12px;border-radius:10px;cursor:pointer;white-space:nowrap}
-button:focus-visible,label.btn:focus-within{outline:2px solid var(--ac);outline-offset:2px}
-.pri{background:var(--ac)!important;color:#fff!important;border-color:var(--ac)!important}
+body{background:var(--bg);color:var(--tx);font:15px/1.4 var(--f);-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--card)}
+.g{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,label.btn{font:inherit;font-weight:600;color:var(--tx);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:42px;cursor:pointer;text-align:center}
+button:focus-visible,label.btn:focus-within,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+.link{border:0;background:none;color:var(--ac);padding:4px 2px;min-height:0;font-weight:600}
+input[type=text],input[type=date],input[type=search],textarea,select{font:inherit;color:var(--tx);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%}
 input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
-.tools{display:flex;gap:8px;overflow-x:auto;padding-block:8px 2px;scrollbar-width:none}
-main{padding-block:14px 110px}
-.chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding-block:8px 2px}
-@media (min-width:700px){.chips{grid-template-columns:repeat(4,minmax(0,1fr))}}
-.md .chips{margin-bottom:10px}
-.chip{font-size:13px;padding:8px 10px;border-radius:10px;white-space:normal;text-align:left;line-height:1.25;min-width:0}
-.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
-#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.st{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;cursor:pointer;user-select:none;display:flex;flex-direction:column;gap:6px;text-align:left;white-space:normal;font-weight:400}
-.st:active{transform:scale(.97)}
-.st .n{font-weight:600;line-height:1.25}
-.st .s{display:flex;align-items:baseline;gap:8px;font-variant-numeric:tabular-nums}
-.st .s b{font-family:var(--fd);font-size:26px;color:var(--ac)}
-.st .g{font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--acs);color:var(--ac)}
-.st.zero .s b{color:var(--mut)}
-.empty{color:var(--mut);text-align:center;padding:40px 10px;line-height:1.5}
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--bd);display:flex;gap:8px;padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.bar button{flex:1}
-.ov{position:fixed;inset:0;background:#0009;z-index:20;display:flex;align-items:flex-end;justify-content:center}
-.md{background:var(--card);width:min(560px,100%);max-height:88vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-@media (min-width:700px){.ov{align-items:center}.md{border-radius:16px}}
-.md h2{font-family:var(--fd);margin:0 0 4px;font-size:21px}
-.tot{color:var(--mut);margin-bottom:12px;display:flex;gap:14px;align-items:baseline}
-.tot b{font-family:var(--fd);font-size:30px;color:var(--ac)}
-.ds{display:flex;gap:8px;margin-bottom:8px}
-.ds .add{flex:1;display:flex;justify-content:space-between;gap:8px;text-align:left;white-space:normal;padding:14px 12px;background:var(--acs);border-color:transparent}
-.ds .add i{font-style:normal;color:var(--ok);font-weight:700}
-.ds .cnt{min-width:34px;display:flex;align-items:center;justify-content:center;font-weight:700;font-variant-numeric:tabular-nums}
-.ds .minus{color:var(--bad);width:46px;padding:0}
-.row{display:flex;gap:8px;margin-top:12px}
-.row>*{flex:1}
-textarea,input[type=number],select{width:100%;font:inherit;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)}
-textarea{min-height:200px}
-.hint{color:var(--mut);font-size:13px;line-height:1.45}
-.fl{display:grid;gap:6px;margin-bottom:12px;font-weight:600}
-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-td{padding:9px 4px;border-bottom:1px solid var(--bd)}
-td:last-child{text-align:right;font-family:var(--fd);font-size:20px;font-weight:800;color:var(--ac)}
-td.p{color:var(--mut);text-align:right;width:60px}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:99px;z-index:30;font-weight:600;max-width:90vw;text-align:center}
+.mut{color:var(--mut)}.sm{font-size:13px}
+/* top */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--card);border-bottom:1px solid var(--line);padding-block:8px}
+.trow{display:flex;gap:8px;align-items:center}
+.tinfo{flex:1;min-width:0;display:flex;gap:8px;flex-wrap:wrap}
+.tinfo button{border:0;background:var(--bg);text-align:left;min-height:38px;padding:7px 10px;max-width:100%;overflow-wrap:anywhere}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tab{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 12px;min-height:46px;flex:1 1 120px;max-width:220px;text-align:left}
+.tab small{font-weight:500;color:var(--mut);font-size:12px}
+.tab.on{background:var(--ac);border-color:var(--ac);color:#fff}.tab.on small{color:#dbe6fb}
+/* main */
+.main{display:grid;grid-template-columns:330px minmax(0,1fr);gap:12px;padding-block:12px 0;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px}
+.listcol{position:sticky;top:calc(var(--toph) + 12px);max-height:calc(100vh - var(--toph) - 24px);display:flex;flex-direction:column}
+.lhead{display:flex;gap:6px;padding:10px;border-bottom:1px solid var(--line)}
+.lhead button{white-space:nowrap}
+#slist{overflow:auto;padding:4px}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;width:100%;text-align:left;border:0;border-radius:8px;background:none;padding:8px 10px;font-weight:400;min-height:48px}
+.srow+.srow{margin-top:2px}
+.srow .nm{font-weight:600;overflow-wrap:anywhere}
+.srow .ss{grid-column:1;font-size:13px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.srow .sg{grid-row:1/3;grid-column:2;align-self:center;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.srow.on{background:var(--acs);box-shadow:inset 3px 0 0 var(--ac)}
+.dot{width:8px;height:8px;border-radius:50%;background:#b8c1cc;flex:none}
+.s-draft .dot{background:#e09a1a}.s-done .dot{background:var(--ok)}.s-abs .dot{background:#8a94a3}
+.s-abs .nm{color:var(--mut)}
+.demo{margin:8px 10px;padding:8px 10px;background:var(--warns);color:var(--warn);border-radius:8px;font-size:13px}
+.cardcol{min-width:0}
+.card{padding:14px}
+.chead{position:sticky;top:var(--toph);z-index:5;background:var(--card);border-radius:12px 12px 0 0;padding:12px 14px;border-bottom:1px solid var(--line)}
+.crow{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.chead h2{margin:0;font-size:19px;line-height:1.25;overflow-wrap:anywhere}
+.tot{font-size:24px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tot small{font-size:14px;color:var(--mut);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--bg);color:var(--mut)}
+.chip.s-draft{background:var(--warns);color:var(--warn)}.chip.s-done{background:var(--oks);color:var(--ok)}.chip.s-zero{background:var(--bads);color:var(--bad)}
+.cact{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.cact button{min-height:36px;padding:6px 10px;font-size:14px}
+.bd{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.bd button{min-height:34px;padding:5px 10px;font-size:13px;font-weight:600}
+.bd button.on{border-color:var(--ac);color:var(--ac);background:var(--acs)}
+.stname{margin:0 0 2px;font-size:16px}
+.note{color:var(--mut);font-size:14px;margin:0 0 8px;white-space:pre-line}
+.task{margin-top:10px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}
+.drow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.drow.kf{box-shadow:-14px 0 0 -10px var(--ac)}
+.dt{overflow-wrap:anywhere}
+.dt .ds{display:block;font-size:13px;color:var(--mut);margin-top:3px}
+.dt .ds.set{color:var(--ok);font-weight:600}
+.lvtxt{margin-top:6px;font-size:13px;background:var(--bg);border-radius:8px;padding:8px 10px}
+.lvtxt div+div{margin-top:4px}
+.lvs{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.lv{min-width:52px;min-height:52px;font-size:19px;font-weight:700;border-width:1.5px;padding:0 10px}
+.lv.on{background:var(--ac);border-color:var(--ac);color:#fff;box-shadow:0 0 0 3px var(--acs)}
+.clr{min-width:42px;min-height:42px;padding:0;color:var(--mut)}
+.fbk{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.fbk summary{cursor:pointer;font-weight:600}
+.phr{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.phr button{font-weight:500;font-size:13px;min-height:34px;padding:5px 10px;text-align:left}
+.nav{position:sticky;bottom:0;z-index:6;display:flex;gap:8px;background:var(--bg);padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.nav button{flex:1;min-height:50px}
+.nav .only-m{flex:0 0 auto}
+.keys{font-size:12px;color:var(--mut);padding:0 2px 10px}
+.empty{padding:28px 16px;text-align:center;color:var(--mut)}
+@media (max-width:899px){
+  .main{grid-template-columns:minmax(0,1fr)}
+  .listcol{position:static;max-height:none}
+  .v-card .listcol,.v-list .cardcol{display:none}
+  .keys{display:none}
+  .tab{flex:1 1 calc(50% - 6px);max-width:none;min-height:40px;padding:5px 10px}
+  .tinfo{flex-wrap:nowrap}
+  .tinfo button{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+  #bClass{flex:0 0 auto;max-width:40%}.lbl{display:none}
+  .nav button{min-width:0;padding:6px 8px;font-size:14px}
+}
+.back{margin:-4px 0 6px -2px}
+@media (min-width:900px){.only-m{display:none}}
+@media (max-width:520px){.drow{grid-template-columns:minmax(0,1fr)}.lvs{justify-content:flex-start}.lv{flex:1}}
+/* modal */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(15,23,35,.45);display:flex;align-items:flex-end;justify-content:center}
+#ovQ{z-index:60}
+.md{background:var(--card);width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+@media (min-width:760px){.ov{align-items:center}.md{border-radius:16px}}
+.md h2{margin:0 0 10px;font-size:20px}
+.md h3{margin:16px 0 6px;font-size:15px}
+.fl{display:grid;gap:5px;margin-bottom:10px;font-weight:600;font-size:14px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btns>*{flex:1 1 160px}
+.mlist{display:grid;gap:6px}
+.mitem{display:flex;gap:6px}
+.mitem>button:first-child{flex:1;text-align:left;font-weight:500;overflow-wrap:anywhere}
+.mitem.on>button:first-child{border-color:var(--ac);background:var(--acs)}
+.sum{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:8px}
+.sum b{font-variant-numeric:tabular-nums}
+.warn{color:var(--warn)}
+textarea.ed{min-height:46vh;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.5}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mut);font-weight:600}
+td.sc{font-weight:700;font-size:17px;text-align:right;white-space:nowrap}
+tr.r-draft td{background:var(--warns)}tr.r-zero td{background:var(--bads)}
+td details summary{cursor:pointer;color:var(--ac);font-size:13px}
+ol.pv{margin:8px 0;padding-left:28px;max-height:40vh;overflow:auto}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--tx);color:#fff;padding:10px 16px;border-radius:99px;z-index:70;font-weight:600;max-width:90vw;text-align:center}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
-<header class="wrap">
-  <div class="hrow"><h1>Баллы на уроке</h1><button id="bCls">🏫 <span id="clsName"></span> ▾</button></div>
-  <div class="sum"><span id="sum"></span> <span id="cloud"></span></div>
-  <div class="tools">
-    <label class="btn pri">📂 Загрузить список<input type="file" id="file" accept=".xlsx,.xls,.csv,.docx,.txt"></label>
-    <button id="bNames">✏️ Ученики</button>
-    <button id="bDesc">⚙️ Дескрипторы</button>
-    <button id="bScale">🎯 Шкала</button>
-    <button id="bSort">А→Я</button>
-    <button id="bNew">🔄 Новый урок</button>
-    <button id="bBak">📦 Копия</button>
+<header class="top g" id="top">
+  <div class="trow">
+    <div class="tinfo">
+      <button id="bClass" title="Класс"></button>
+      <button id="bLesson" title="Урок: дата и тема"></button>
+    </div>
+    <button id="bRes" class="pri">Итоги</button>
+    <button id="bMenu" aria-label="Меню">☰</button>
   </div>
-  <div class="chips" id="stBar"></div>
+  <div class="tabs" id="tabs"></div>
 </header>
-<main class="wrap"><div id="grid"></div></main>
-<div class="bar"><button id="bRes" class="pri">📋 Итоги для BilimClass</button><button id="bXls">💾 Excel</button></div>
+<main class="main g" id="main">
+  <section class="listcol panel" aria-label="Ученики">
+    <div class="lhead"><input type="search" id="q" placeholder="Поиск ученика" aria-label="Поиск ученика"><button id="bSort"></button></div>
+    <div id="slist"></div>
+  </section>
+  <section class="cardcol" id="cardcol"></section>
+</main>
 
-<div class="ov" id="ovS" hidden><div class="md">
-  <h2 id="sName"></h2>
-  <div class="tot"><span>Баллы: <b id="sTot">0</b></span><span id="sGr"></span></div>
-  <div class="chips" id="sStg"></div>
-  <div id="sDesc"></div>
-  <div class="row"><button data-nav="-1">← Пред.</button><button class="pri" data-close>Готово</button><button data-nav="1">След. →</button></div>
-</div></div>
-
-<div class="ov" id="ovD" hidden><div class="md">
-  <h2>Дескрипторы</h2>
-  <p class="hint">Строка с <b>#</b> задаёт этап урока. Под ней идут дескрипторы этого этапа, по одному на строку: <b>описание ; баллы</b>.<br>Например: <i># 4. Бекіту</i>, а ниже <i>Тапсырманы дұрыс орындады ; 2</i></p>
-  <textarea id="dTxt" style="min-height:340px"></textarea>
-  <div class="row"><button data-close>Отмена</button><button class="pri" id="dSave">Сохранить</button></div>
-</div></div>
-
-<div class="ov" id="ovN" hidden><div class="md">
-  <h2>Ученики</h2>
-  <p class="hint">Одно имя на строку. Удобно вставить список, скопированный из журнала BilimClass, тогда порядок совпадёт. Баллы уже оценённых сохранятся.</p>
-  <textarea id="nTxt"></textarea>
-  <div class="row"><button data-close>Отмена</button><button class="pri" id="nSave">Сохранить</button></div>
-</div></div>
-
-<div class="ov" id="ovC" hidden><div class="md">
-  <h2>Шкала оценки</h2>
-  <label class="fl">Оценка в журнале
-    <select id="cMode"><option value="10">10-балльная</option><option value="5">5-балльная</option><option value="pct">Проценты</option><option value="custom">Свои пороги в баллах</option><option value="raw">Только баллы</option></select>
-  </label>
-  <label class="fl">Потолок баллов за урок
-    <input type="number" id="cMax" min="1" step="1" inputmode="numeric">
-  </label>
-  <p class="hint">Больше потолка ученик не наберёт. Для 10-балльной, 5-балльной шкалы и процентов потолок считается за 100%.</p>
-  <div id="cMaxBox"><p class="hint">10-балльная: доля от максимума × 10, с округлением. 5-балльная: 85% и выше — 5, 65% — 4, 40% — 3, ниже — 2. Ученик без баллов оценку не получает.</p></div>
-  <div id="cThrBox"><label class="fl">Пороги: <span class="hint">оценка ; от скольки баллов</span>
-    <textarea id="cThr" style="min-height:140px"></textarea>
-  </label>
-  <p class="hint">Например, «5 ; 9» значит, что от 9 баллов ставится 5. Оценка может быть любой: 10, 5, «зачёт».</p></div>
-  <div class="row"><button data-close>Отмена</button><button class="pri" id="cSave">Сохранить</button></div>
-</div></div>
-
-<div class="ov" id="ovR" hidden><div class="md">
-  <h2>Итоги урока</h2>
-  <p class="hint">Порядок как в списке. Откройте журнал BilimClass и переносите оценки сверху вниз.</p>
-  <div style="overflow-x:auto"><table id="rTab"></table></div>
-  <div class="row"><button id="rCopyG">Копировать оценки</button><button id="rCopyT">Копировать таблицу</button></div>
-  <div class="row"><button class="pri" data-close>Закрыть</button></div>
-</div></div>
-
-<div class="ov" id="ovK" hidden><div class="md">
-  <h2>Классы</h2>
-  <p class="hint">Нажмите на класс, чтобы открыть его. У каждого класса свой список учеников и свои баллы. Чтобы загрузить список, создайте класс, откройте его и нажмите «Загрузить список».</p>
-  <div id="kList"></div>
-  <label class="fl" style="margin-top:12px">Новый класс
-    <input type="text" id="kNew" placeholder="Например, 7А" style="width:100%;font:inherit;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)">
-  </label>
-  <div class="row"><button id="kRen">Переименовать текущий</button><button class="pri" id="kAdd">Создать класс</button></div>
-  <div class="row"><button data-close>Закрыть</button></div>
-</div></div>
-
-<div class="ov" id="ovB" hidden><div class="md">
-  <h2>Резервная копия</h2>
-  <p class="hint">Копия сохраняет в один файл все классы, списки учеников, баллы, этапы, дескрипторы и шкалу. Отправьте файл себе в WhatsApp или положите на Google Диск. Если данные пропадут или нужно перенести их на другой телефон, нажмите «Восстановить» и выберите этот файл.</p>
-  <p class="hint" id="bLast"></p>
-  <div class="row"><button class="pri" id="bSaveBak">💾 Сохранить копию</button>
-    <label class="btn" style="text-align:center">📂 Восстановить<input type="file" id="bLoad" accept=".json,application/json"></label></div>
-  <div class="row"><button data-close>Закрыть</button></div>
-</div></div>
-
+<div class="ov" id="ov" hidden><div class="md" id="md"></div></div>
 <div class="ov" id="ovQ" hidden><div class="md">
-  <h2 id="qT"></h2><p class="hint" id="qM"></p>
-  <div class="row"><button id="qNo">Отмена</button><button class="pri" id="qYes">Да</button></div>
+  <h2 id="qT"></h2><p class="mut" id="qM"></p>
+  <div class="btns"><button id="qNo">Отмена</button><button class="pri" id="qYes">Да</button></div>
 </div></div>
 
 <script>
-const KEY='ocenka_v2',$=id=>document.getElementById(id);
-const DEF_ST=['1. Алдыңғы тақырыпты байланыстыру (үй тапсырмасы, сұрау)','2. Жаңа тақырыпқа өту','3. Жаңа тақырыпты талқылау','4. Бекіту'];
-const HW=[{t:'Үй тапсырмасын толық орындады',p:2,st:0},{t:'Үй тапсырмасын жартылай орындады',p:1,st:0}];
-const DEF_DESC=[...HW,
-  {t:'Сұраққа толық жауап берді',p:2,st:0},{t:'Жартылай жауап берді',p:1,st:0},{t:'Мысал келтірді',p:1,st:0},
-  {t:'Тақырыпты/мақсатты болжады',p:1,st:1},{t:'Белсенді қатысты',p:1,st:1},
-  {t:'Өз пікірін айтты',p:1,st:2},{t:'Дұрыс тұжырым жасады',p:2,st:2},{t:'Сұрақ қойды',p:1,st:2},
-  {t:'Тапсырманы дұрыс орындады',p:2,st:3},{t:'Тапсырманы жартылай орындады',p:1,st:3},{t:'Тақтада орындады',p:1,st:3}];
-let S={students:[],max:20,mode:'10',thr:[{g:'5',min:17},{g:'4',min:13},{g:'3',min:8},{g:'2',min:1}],
-  stages:DEF_ST.slice(),stage:0,desc:DEF_DESC.map(x=>({...x}))};
-function migrate(){
-  if(!S.stages||!S.stages.length){S.stages=DEF_ST.slice();S.stage=0;S.desc=DEF_DESC.map(x=>({...x}));
-    Object.values(S.classes||{}).forEach(a=>a.forEach(s=>s.c={}));(S.students||[]).forEach(s=>s.c={})}
-  if(!S.hw){S.hw=1;if(!S.desc.some(d=>/үй тапсырма/i.test(d.t))){const n=HW.length;
-    S.desc=[...HW.map(x=>({...x})),...S.desc];
-    const sh=s=>{const c={};Object.keys(s.c).forEach(k=>c[+k+n]=s.c[k]);s.c=c};
-    Object.values(S.classes||{}).forEach(a=>a.forEach(sh));if(S.students&&!Object.values(S.classes||{}).includes(S.students))S.students.forEach(sh);
-    if(S.stages[0]==='1. Алдыңғы тақырыпты байланыстыру (сұрау)')S.stages[0]=DEF_ST[0]}}
-  S.desc.forEach(d=>{if(d.st==null||d.st>=S.stages.length)d.st=0});if(!(S.stage<S.stages.length))S.stage=0}
-const stTot=(s,k)=>S.desc.reduce((a,d,i)=>a+(d.st===k?(s.c[i]||0)*d.p:0),0);
-const chips=s=>S.stages.map((n,k)=>`<button class="chip${k===S.stage?' on':''}" data-stg="${k}">${esc(n)}${s?` · <b>${stTot(s,k)}</b>`:''}</button>`).join('');
-const DEMO=['Ахметов Арман','Бекова Айгерим','Жумабаев Нурлан','Касымова Дана','Сериков Алихан','Тулегенова Мадина'];
-let cur=-1,demo=false;
-try{const d=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('ocenka_v1'));if(d&&d.desc){if(!d.stages)d.stages=null;S=Object.assign(S,d)}}catch(e){}
-function link(){
-  if(!S.classes){S.classes={'Мой класс':S.students||[]};S.cls='Мой класс'}
-  if(!S.classes[S.cls]){S.cls=Object.keys(S.classes)[0];if(!S.cls){S.cls='Мой класс';S.classes[S.cls]=[]}}
-  S.students=S.classes[S.cls]}
-link();migrate();
-if(Object.values(S.classes).every(a=>!a.length)){demo=true;S.students=DEMO.map(n=>({n,c:{}}))}
-let ref=null,pushT=0;
-const push=()=>{if(!ref)return;clearTimeout(pushT);pushT=setTimeout(()=>{const {students,...rest}=S;
-  ref.set({v:JSON.stringify(rest)}).then(()=>$('cloud').textContent='☁️ сохранено в аккаунте').catch(()=>$('cloud').textContent='⚠️ сохранено только на этом устройстве')},1200)};
-const save=()=>{if(demo)return;S.t=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}push()};
-(async()=>{try{if(!window.claude?.use)return;const [d,u]=await Promise.all([claude.use('db'),claude.use('user')]);if(!d||!u)return;
-  ref=d.doc('data/users/'+(await u.id())+'/state');const sn=await ref.get();
-  if(sn.exists){const x=JSON.parse(sn.data().v);if((x.t||0)>(S.t||0)){if(!x.stages)x.stages=null;S=Object.assign(S,x);link();migrate();demo=false;
-    try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}render()}else if(!demo)push()}
-  else if(!demo)push();
-  $('cloud').textContent='☁️ сохраняется в аккаунте'}catch(e){}})();
-const total=s=>Math.min(S.max||Infinity,S.desc.reduce((a,d,i)=>a+(s.c[i]||0)*d.p,0));
-function grade(s){const t=total(s);if(!t||S.mode==='raw')return '';const r=t/(S.max||1);
-  if(S.mode==='custom'){const h=[...S.thr].sort((a,b)=>b.min-a.min).find(x=>t>=x.min);return h?h.g:''}
-  if(S.mode==='10')return String(Math.max(1,Math.min(10,Math.round(r*10))));
-  if(S.mode==='5')return String(r>=.85?5:r>=.65?4:r>=.4?3:2);
-  return Math.min(100,Math.round(r*100))+'%';}
-const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
-function show(id){$(id).hidden=false}
-function closeOv(){document.querySelectorAll('.ov').forEach(o=>o.hidden=true)}
-function ask(t,m){return new Promise(res=>{$('qT').textContent=t;$('qM').textContent=m;show('ovQ');
-  $('qYes').onclick=()=>{$('ovQ').hidden=true;res(true)};$('qNo').onclick=()=>{$('ovQ').hidden=true;res(false)}})}
+const $=id=>document.getElementById(id);
+const KEY='ocenka_v3';
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const fmtD=s=>s?s.split('-').reverse().join('.'):'';
+const clone=o=>JSON.parse(JSON.stringify(o));
+const cmp=(a,b)=>a.localeCompare(b,['kk','ru']);
 
-function render(){
-  const g=$('grid'),done=S.students.filter(s=>total(s)).length;$('clsName').textContent=S.cls;$('stBar').innerHTML=chips();
-  $('sum').textContent=S.students.length?`Оценено ${done} из ${S.students.length}`:'';
-  if(!S.students.length){g.innerHTML='<div class="empty">Список пуст. Загрузите учеников из Excel или Word<br>или введите вручную.</div>';return}
-  g.innerHTML=(demo?'<div class="empty" style="grid-column:1/-1;padding:4px 0 6px">Это пример класса. Загрузите свой список, и пример исчезнет.</div>':'')+
-    S.students.map((s,i)=>{const t=total(s),gr=grade(s);
-    return `<button class="st${t?'':' zero'}" data-i="${i}"><span class="n">${i+1}. ${esc(s.n)}</span><span class="s"><b>${t}</b>${gr?`<span class="g">${gr}</span>`:''}</span></button>`}).join('');
+const NEWTON=`Тақырып: Ньютонның бірінші заңы
+Мақсат: Дененің тыныштықта қалуын немесе бірқалыпты түзу сызықты қозғалуын қорытқы күш арқылы түсіндіру
+# Қайталау | Алдыңғы тақырыпты байланыстыру
+* Ауызша сұрау немесе үй тапсырмасы: үстел үстінде жатқан кітап
+## Кітапқа әсер ететін күштер
+- Кітапқа әсер ететін ауырлық күші мен тіректің реакция күшін атайды
+  0: Күштерді атамайды немесе қате атайды
+  1: Екі күштің біреуін ғана дұрыс атайды
+  2: Ауырлық күшін де, тіректің реакция күшін де дұрыс атайды
+  > Ауырлық күшін дұрыс атадың. Кітапқа тағы қай дене әсер етеді, ойлан.
+# Жаңа тақырып | Жаңа тақырыпқа өту
+* Сұрақ: үстелде жатқан кітап неге қозғалмай тұр? Оқушылардың болжамдарын тыңдау. Балл қойылмайды.
+# Талқылау | Жаңа тақырыпты талқылау
+## Кітапқа әсер ететін күштердің сызбасы
+- Екі күшті сызбада көрсетеді
+  0: Екі күш те қате көрсетілген
+  1: Екі күштің біреуі дұрыс көрсетілген
+  2: Екі күш те дұрыс бағытта көрсетілген
+  > Ауырлық күшін дұрыс көрсеттің. Енді тіректің реакция күшінің бағытын белгіле.
+- Күштердің векторлық қосындысы неге нөлге тең екенін түсіндіреді
+  0: Түсіндірмейді немесе қате түсіндіреді
+  1: Күштердің шамасы тең екенін айтады, бірақ бағыттарын ескермейді
+  2: Күштердің шамасы тең, бағыттары қарама-қарсы, сондықтан қорытқы күш нөлге тең деп түсіндіреді
+  > Күштердің шамасы тең екенін дұрыс айттың. Енді олардың бағыттарын салыстыр.
+# Бекіту | Бекіту
+* Жаңа мысал: түзу жолмен тұрақты жылдамдықпен келе жатқан автобус
+## Жаңа мысалды талдау
+- Қорытқы күш нөлге тең болғанда дененің қозғалыс сипатын анықтайды
+  0: Қозғалыс сипатын анықтамайды немесе дене тоқтайды деп қате айтады
+  1: Дене қозғала береді дейді, бірақ жылдамдықтың тұрақты, жолдың түзу екенін көрсетпейді
+  2: Дене бірқалыпты түзу сызықты қозғалады (немесе тыныштықта қалады) деп дұрыс анықтайды
+  > Қозғалыс сақталатынын дұрыс байқадың. Енді жылдамдық өзгере ме, жоқ па, соны анықта.
+- Қорытындысын Ньютонның бірінші заңымен негіздейді
+  0: Негіздеме жоқ
+  1: Заңды атайды, бірақ мысалдағы күштермен байланыстырмайды
+  2: Заңды тұжырымдап, мысалдағы күштердің теңгерілгенімен байланыстырады
+  > Заңды дұрыс атадың. Енді оны автобусқа әсер ететін күштермен байланыстыр.`;
+const BLANK=`Тақырып:
+Мақсат:
+# Қайталау | Алдыңғы тақырыпты байланыстыру
+* Ауызша сұрау немесе үй тапсырмасы
+## 1-тапсырма
+- Бақыланатын нәтиже (дескриптор)
+  0: Орындамады немесе қате
+  1: Жартылай: нақты не дұрыс
+  2: Толық орындады
+# Жаңа тақырып | Жаңа тақырыпқа өту
+* Болжам, сұрақ қою. Балл қойылмайды.
+# Талқылау | Жаңа тақырыпты талқылау
+## 2-тапсырма
+- Бақыланатын нәтиже (дескриптор)
+  0:
+  1:
+  2:
+# Бекіту | Бекіту
+## 3-тапсырма
+- Бақыланатын нәтиже (дескриптор)
+  0:
+  1:
+  2:
+# Рефлексия | Рефлексия
+* Балл қойылмайды`;
+const DEMO_NAMES=['Әлібек Нұрсұлтан','Бекова Айгерім','Жұмабаев Нұрлан','Қасымова Дана','Серікұлы Әлихан','Төлегенова Мадина Ғалымқызы','Үсенов Ерасыл','Ыбырайым Іңкәр'];
+
+/* ---------- template text format ---------- */
+function parseTpl(txt){
+  const T={topic:'',goal:'',stages:[]},warn=[];let st=null,tk=null,d=null;
+  String(txt).split('\n').forEach((raw,i)=>{const l=raw.trim();if(!l)return;let m;
+    if(m=l.match(/^(тақырып|тема)\s*:\s*(.*)$/i)){T.topic=m[2].trim();return}
+    if(m=l.match(/^(мақсат|цель)\s*:\s*(.*)$/i)){T.goal=m[2].trim();return}
+    if(l.startsWith('##')){if(!st){warn.push(`Строка ${i+1}: задание до первого этапа`);return}
+      tk={id:uid(),name:l.replace(/^##\s*/,''),descs:[]};st.tasks.push(tk);d=null;return}
+    if(l[0]==='#'){const p=l.replace(/^#\s*/,'').split('|').map(s=>s.trim());
+      st={id:uid(),short:p[0]||'Этап',name:p[1]||p[0]||'Этап',note:'',tasks:[]};T.stages.push(st);tk=null;d=null;return}
+    if(l[0]==='*'){if(st)st.note+=(st.note?'\n':'')+l.replace(/^\*\s*/,'');return}
+    if(l[0]==='-'){if(!st){warn.push(`Строка ${i+1}: дескриптор до первого этапа`);return}
+      if(!tk){tk={id:uid(),name:'',descs:[]};st.tasks.push(tk)}
+      d={id:uid(),t:l.replace(/^-\s*/,''),levels:[],fb:[]};tk.descs.push(d);return}
+    if(m=l.match(/^(\d+)\s*[:.)\-–—]\s*(.*)$/)){if(!d){warn.push(`Строка ${i+1}: уровень без дескриптора`);return}
+      const v=+m[1];if(!d.levels.some(x=>x.v===v))d.levels.push({v,txt:m[2].trim()});return}
+    if(l[0]==='>'){if(d)d.fb.push(l.replace(/^>\s*/,''));return}
+    warn.push(`Строка ${i+1} не распознана: «${l.slice(0,40)}»`)});
+  T.stages.forEach(s=>s.tasks.forEach(t=>t.descs.forEach(x=>{
+    if(!x.levels.length)x.levels=[0,1,2].map(v=>({v,txt:''}));
+    if(x.levels.length<2)warn.push(`«${x.t.slice(0,40)}»: нужно хотя бы два уровня`);
+    x.levels.sort((a,b)=>a.v-b.v)})));
+  if(!T.stages.length)warn.push('Нет ни одного этапа. Этап начинается со строки «# Название»');
+  return{T,warn};
 }
-function drawSt(){const s=S.students[cur];
-  $('sName').textContent=s.n;$('sTot').textContent=total(s);
-  const gr=grade(s);$('sGr').textContent=gr?'Оценка: '+gr:'';
-  $('sStg').innerHTML=chips(s);
-  $('sDesc').innerHTML=S.desc.map((d,j)=>d.st!==S.stage?'':`<div class="ds"><button class="add" data-add="${j}"><span>${esc(d.t)}</span><i>+${d.p}</i></button><span class="cnt">${s.c[j]||0}×</span><button class="minus" data-sub="${j}" aria-label="Убрать">−</button></div>`).join('')||'<p class="hint">На этом этапе нет дескрипторов. Добавьте их в ⚙️ Дескрипторы.</p>';}
-document.addEventListener('click',e=>{const c=e.target.closest('[data-stg]');if(!c)return;S.stage=+c.dataset.stg;save();render();if(!$('ovS').hidden)drawSt()});
-function add(j,v){const s=S.students[cur];if(v>0&&total(s)>=S.max)return toast(`Потолок ${S.max} баллов уже набран`);s.c[j]=Math.max(0,(s.c[j]||0)+v);save();drawSt();render()}
+function serTpl(T){const o=[`Тақырып: ${T.topic||''}`,`Мақсат: ${T.goal||''}`];
+  T.stages.forEach(s=>{o.push(`# ${s.short} | ${s.name}`);if(s.note)s.note.split('\n').forEach(n=>o.push('* '+n));
+    s.tasks.forEach(t=>{if(t.name)o.push('## '+t.name);t.descs.forEach(d=>{o.push('- '+d.t);
+      d.levels.forEach(l=>o.push(`  ${l.v}: ${l.txt}`));d.fb.forEach(f=>o.push('  > '+f))})})});
+  return o.join('\n')}
 
-$('grid').addEventListener('click',e=>{const b=e.target.closest('.st');if(b){cur=+b.dataset.i;drawSt();show('ovS')}});
-$('sDesc').addEventListener('click',e=>{const a=e.target.closest('[data-add]'),m=e.target.closest('[data-sub]');if(a)add(+a.dataset.add,1);if(m)add(+m.dataset.sub,-1)});
-document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{const n=S.students.length;cur=(cur+ +b.dataset.nav+n)%n;drawSt()});
-document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeOv);
-document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o&&o.id!=='ovQ')closeOv()}));
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOv()});
+/* ---------- scoring ---------- */
+const dmax=d=>Math.max(...d.levels.map(l=>l.v));
+const sDescs=s=>s.tasks.flatMap(t=>t.descs);
+const sMax=s=>sDescs(s).reduce((a,d)=>a+dmax(d),0);
+const scored=(L,s)=>sMax(s)>0&&!L.skip[s.id];
+const activeSt=L=>L.stages.filter(s=>scored(L,s));
+const lMax=L=>activeSt(L).reduce((a,s)=>a+sMax(s),0);
+function stRes(L,sid,s){const m=L.marks[sid]||{};let sum=0,n=0;const ds=sDescs(s);
+  ds.forEach(d=>{if(m[d.id]!=null){n++;sum+=m[d.id]}});return{sum,n,all:ds.length,max:sMax(s)}}
+function res(L,sid){let sum=0,n=0,all=0;activeSt(L).forEach(s=>{const r=stRes(L,sid,s);sum+=r.sum;n+=r.n;all+=r.all});
+  const st=L.absent[sid]?'abs':(!n?'none':n<all?'draft':'done');return{st,sum,n,all,max:lMax(L)}}
+const ST_L={none:'Не проверен',draft:'Черновик',done:'Проверен',abs:'Отсутствовал'};
+const transfer=(r)=>r.st==='done'?r.sum:'';
 
-function setNames(names){const old={};if(!demo)S.students.forEach(s=>old[s.n]=s.c);demo=false;
-  S.students=S.classes[S.cls]=names.map(n=>({n,c:old[n]||{}}));save();render()}
-function drawK(){$('kList').innerHTML=Object.keys(S.classes).map(n=>`<div class="ds"><button class="add" data-k="${esc(n)}"><span>${n===S.cls?'✓ ':''}${esc(n)}</span><i style="color:var(--mut)">${S.classes[n].length} уч.</i></button><button class="minus" data-kdel="${esc(n)}" aria-label="Удалить класс">×</button></div>`).join('')}
-$('bCls').onclick=()=>{$('kNew').value='';drawK();show('ovK')};
-$('kList').addEventListener('click',async e=>{const o=e.target.closest('[data-k]'),d=e.target.closest('[data-kdel]');
-  if(o){S.cls=o.dataset.k;link();demo=false;save();render();closeOv()}
-  if(d){const n=d.dataset.kdel;$('ovK').hidden=true;
-    if(await ask(`Удалить класс «${n}»?`,'Список учеников и баллы этого класса удалятся.')){delete S.classes[n];link();demo=false;save();render()}
-    drawK();show('ovK')}});
-$('kAdd').onclick=()=>{const n=$('kNew').value.trim();if(!n)return toast('Введите название класса');if(S.classes[n])return toast('Такой класс уже есть');
-  S.classes[n]=[];S.cls=n;link();demo=false;save();render();closeOv();toast(`Класс «${n}» создан. Загрузите список учеников`)};
-$('kRen').onclick=()=>{const n=$('kNew').value.trim();if(!n)return toast('Впишите новое название в поле выше');if(S.classes[n])return toast('Такой класс уже есть');
-  S.classes[n]=S.classes[S.cls];delete S.classes[S.cls];S.cls=n;link();demo=false;save();render();drawK();toast('Переименовано')};
-const HEAD=/^(№|n|no|фио|ф\.и\.о\.?|имя|ученик|ученики|фамилия|аты-жөні|аты жөні|оқушы|список.*|класс.*)$/i,LET=/[a-zа-яёәіңғүұқөһ]/i;
-function clean(arr){const out=[];arr.forEach(x=>{x=String(x).trim().replace(/^\d+[\.\)]?\s*/,'').replace(/\s+/g,' ');
-  if(x&&LET.test(x)&&x.length<70&&!HEAD.test(x)&&!out.includes(x))out.push(x)});return out}
-$('file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;e.target.value='';
-  try{let names=[];const ext=f.name.split('.').pop().toLowerCase();
-    if(ext==='docx')names=(await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value.split('\n');
-    else if(ext==='txt')names=(await f.text()).split('\n');
-    else{const wb=XLSX.read(await f.arrayBuffer());
-      XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''}).forEach(r=>{const c=r.find(v=>typeof v==='string'&&LET.test(v)&&!HEAD.test(v.trim()));if(c)names.push(c)})}
-    names=clean(names);if(!names.length)return toast('В файле не нашлось имён');
-    if(!demo&&S.students.length&&!await ask('Заменить список?',`В файле ${names.length} учеников. Баллы совпадающих имён сохранятся.`))return;
-    setNames(names);toast(`Загружено учеников: ${names.length}`)}
-  catch(err){toast('Не удалось прочитать файл. Сохраните его как .xlsx или .docx')}});
-$('bNames').onclick=()=>{$('nTxt').value=demo?'':S.students.map(s=>s.n).join('\n');show('ovN')};
-$('nSave').onclick=()=>{setNames(clean($('nTxt').value.split('\n')));closeOv()};
-$('bDesc').onclick=()=>{$('dTxt').value=S.stages.map((n,k)=>'# '+n+'\n'+S.desc.filter(d=>d.st===k).map(d=>d.t+' ; '+d.p).join('\n')).join('\n\n');show('ovD')};
-$('dSave').onclick=()=>{const st=[],nd=[];
-  $('dTxt').value.split('\n').forEach(l=>{l=l.trim();if(!l)return;
-    if(l[0]==='#'){st.push(l.replace(/^#+\s*/,'')||'Этап '+(st.length+1));return}
-    if(!st.length)st.push('Этап 1');const m=l.split(';');
-    nd.push({t:m[0].trim(),p:parseFloat((m[1]||'1').replace(',','.'))||0,st:st.length-1})});
-  if(!nd.length)return toast('Добавьте хотя бы один дескриптор');
-  const key=(d,arr)=>arr[d.st]+'|'+d.t;
-  Object.values(S.classes).forEach(a=>a.forEach(s=>{const by={};S.desc.forEach((d,i)=>by[key(d,S.stages)]=s.c[i]);s.c={};nd.forEach((d,i)=>{const v=by[key(d,st)];if(v)s.c[i]=v})}));
-  S.desc=nd;S.stages=st;if(S.stage>=st.length)S.stage=0;save();render();closeOv()};
-const cVis=()=>{const c=$('cMode').value==='custom';$('cThrBox').hidden=!c;$('cMaxBox').hidden=c||$('cMode').value==='raw';const m=+$('cMax').value||10;
-  if(c&&!$('cThr').value.trim())$('cThr').value=`5 ; ${Math.ceil(m*.85)}\n4 ; ${Math.ceil(m*.65)}\n3 ; ${Math.ceil(m*.4)}\n2 ; 1`};
-$('cMode').onchange=cVis;
-$('bScale').onclick=()=>{$('cMode').value=S.mode;$('cMax').value=S.max;$('cThr').value=S.thr.map(x=>x.g+' ; '+x.min).join('\n');cVis();show('ovC')};
-$('cSave').onclick=()=>{
-  if($('cMode').value==='custom'){const th=$('cThr').value.split('\n').map(l=>{const m=l.split(';');return{g:m[0].trim(),min:parseFloat((m[1]||'').replace(',','.'))}}).filter(x=>x.g&&!isNaN(x.min));
-    if(!th.length)return toast('Напишите хотя бы один порог, например «5 ; 9»');S.thr=th}
-  S.mode=$('cMode').value;S.max=Math.max(1,parseFloat($('cMax').value)||10);save();render();closeOv()};
-$('bSort').onclick=()=>{S.students.sort((a,b)=>a.n.localeCompare(b.n,'ru'));save();render();toast('Отсортировано по алфавиту')};
-$('bNew').onclick=async()=>{if(await ask('Новый урок?','Баллы всех учеников обнулятся. Сначала сохраните итоги.')){S.students.forEach(s=>s.c={});save();render()}};
+/* ---------- storage ---------- */
+let D;
+function blankDB(){return{v:3,classes:[],lessons:[],templates:[
+  {id:uid(),name:'ФО · Физика 9 · Ньютонның бірінші заңы',txt:NEWTON},
+  {id:uid(),name:'Бос шаблон · 4 кезең + рефлексия',txt:BLANK}],archive:[],ui:{sort:'list',view:'list'}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('Не удалось сохранить: память браузера недоступна')}}
+function migrateOld(src){
+  if(!src||!src.desc)return false;const cls=src.classes||{'Мой класс':src.students||[]};
+  const stages=(src.stages&&src.stages.length)?src.stages:['Баллы'];let added=0;
+  Object.keys(cls).forEach(name=>{const arr=(cls[name]||[]).filter(s=>s&&s.n);if(!arr.length)return;
+    const c={id:uid(),name,students:arr.map(s=>({id:uid(),n:s.n}))};D.classes.push(c);added++;
+    const rows=arr.map(s=>{const per=stages.map((_,k)=>src.desc.reduce((a,d,i)=>a+((d.st||0)===k?((s.c&&s.c[i])||0)*d.p:0),0));
+      const raw=per.reduce((a,b)=>a+b,0);return{n:s.n,per,total:src.max?Math.min(src.max,raw):raw}});
+    if(rows.some(r=>r.total>0))D.archive.push({id:uid(),cid:c.id,date:today(),label:'Баллы из предыдущей версии (без пересчёта)',stages,rows})});
+  return added>0}
+function seedDemo(){const c={id:uid(),name:'Пример · 9А',demo:true,students:DEMO_NAMES.map(n=>({id:uid(),n}))};D.classes.push(c);
+  const L=makeLesson(c.id,today(),'',{tpl:D.templates[0].id});D.ui.cid=c.id;D.ui.lid=L.id}
+function load(){let raw=null;try{raw=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+  if(raw&&raw.v===3&&Array.isArray(raw.classes)){D=raw;D.ui=D.ui||{};D.archive=D.archive||[];if(!D.templates||!D.templates.length)D.templates=blankDB().templates;return}
+  D=blankDB();let old=null;try{old=JSON.parse(localStorage.getItem('ocenka_v2'))||JSON.parse(localStorage.getItem('ocenka_v1'))}catch(e){}
+  if(migrateOld(old)){D.ui.cid=D.classes[0].id;D.ui.migrated=1}else seedDemo();save()}
 
-const val=s=>grade(s)||(S.mode==='raw'?String(total(s)):'');
-$('bRes').onclick=()=>{$('rTab').innerHTML=S.students.map((s,i)=>`<tr><td>${i+1}. ${esc(s.n)}<div class="hint">${S.stages.map((n,k)=>'Э'+(k+1)+': '+stTot(s,k)).join(' · ')}</div></td><td class="p">${total(s)} б.</td><td>${val(s)||'—'}</td></tr>`).join('');show('ovR')};
-async function copy(txt){try{await navigator.clipboard.writeText(txt);toast('Скопировано')}catch(e){$('nTxt').value=txt;closeOv();show('ovN');$('nTxt').select();toast('Выделите текст и скопируйте вручную')}}
-$('rCopyG').onclick=()=>copy(S.students.map(val).join('\n'));
-$('rCopyT').onclick=()=>copy(S.students.map(s=>`${s.n}\t${total(s)}\t${val(s)}`).join('\n'));
+/* ---------- lessons ---------- */
+function makeLesson(cid,date,topic,src){let stages,goal='',tp='';
+  if(src.lesson){const s=D.lessons.find(x=>x.id===src.lesson);stages=clone(s.stages);goal=s.goal;tp=s.topic}
+  else{const t=D.templates.find(x=>x.id===src.tpl)||D.templates[0];const p=parseTpl(t.txt).T;stages=p.stages;goal=p.goal;tp=p.topic}
+  const L={id:uid(),cid,date:date||today(),topic:topic||tp,goal,stages,marks:{},absent:{},fb:{},skip:{},created:Date.now()};
+  D.lessons.push(L);return L}
+const C=()=>D.classes.find(c=>c.id===D.ui.cid);
+const Lz=()=>{const L=D.lessons.find(l=>l.id===D.ui.lid);return L&&L.cid===D.ui.cid?L:null};
+const curStage=L=>L&&(L.stages.find(s=>s.id===D.ui.stage)||L.stages.find(s=>scored(L,s))||L.stages[0]);
+function fixUi(){if(!C())D.ui.cid=D.classes[0]&&D.classes[0].id;
+  if(!Lz()){const ls=D.lessons.filter(l=>l.cid===D.ui.cid).sort((a,b)=>b.created-a.created);D.ui.lid=ls[0]&&ls[0].id}
+  const L=Lz();if(L){const s=curStage(L);D.ui.stage=s&&s.id}
+  const c=C();if(c&&!c.students.some(s=>s.id===D.ui.sid))D.ui.sid=c.students[0]&&c.students[0].id}
+function order(){const c=C();if(!c)return[];const a=c.students.slice();if(D.ui.sort==='az')a.sort((x,y)=>cmp(x.n,y.n));return a}
 
+/* ---------- ui helpers ---------- */
+let undoSt=[],openInfo=new Set(),kRow=0,rowIds=[],q='';
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2300)}
+function modal(html){$('md').innerHTML=html;$('ov').hidden=false;$('md').scrollTop=0}
+function closeModal(){$('ov').hidden=true}
+function ask(t,m,yes='Да'){return new Promise(r=>{$('qT').textContent=t;$('qM').textContent=m;$('qYes').textContent=yes;$('ovQ').hidden=false;
+  $('qYes').onclick=()=>{$('ovQ').hidden=true;r(true)};$('qNo').onclick=()=>{$('ovQ').hidden=true;r(false)}})}
+$('ov').addEventListener('click',e=>{if(e.target.id==='ov')closeModal()});
+
+/* ---------- render ---------- */
+function render(){fixUi();const c=C(),L=Lz();
+  $('bClass').innerHTML=c?`<span class="lbl">Класс: </span><b>${esc(c.name)}</b>`:'Создать класс';
+  $('bLesson').innerHTML=L?`${fmtD(L.date)} · <b>${esc(L.topic||'Тема не указана')}</b>`:'Создать урок';
+  $('bSort').textContent=D.ui.sort==='az'?'А–Я':'По списку';$('bSort').title='Порядок на рабочем экране. На итоги не влияет';
+  renderTabs(L);renderList(c,L);renderCard(c,L);
+  $('main').className='main g '+(D.ui.view==='card'?'v-card':'v-list');
+  requestAnimationFrame(()=>document.documentElement.style.setProperty('--toph',$('top').offsetHeight+'px'))}
+function renderTabs(L){const t=$('tabs');if(!L){t.innerHTML='';return}const c=C(),cur=curStage(L);
+  const pres=c.students.filter(s=>!L.absent[s.id]);
+  t.innerHTML=L.stages.map(s=>{let sub;
+    if(L.skip[s.id])sub='не проводился';else if(!sMax(s))sub='без баллов';
+    else{const done=pres.filter(p=>{const r=stRes(L,p.id,s);return r.n===r.all}).length;sub=`✓ ${done}/${pres.length} · ${sMax(s)} б.`}
+    return `<button class="tab${s===cur?' on':''}" data-stage="${s.id}" title="${esc(s.name)}"><b>${esc(s.short)}</b><small>${sub}</small></button>`}).join('')}
+function renderList(c,L){const el=$('slist');
+  if(!c){el.innerHTML='<div class="empty">Создайте класс: ☰ → Классы и списки</div>';return}
+  if(!c.students.length){el.innerHTML='<div class="empty">В классе нет учеников.<br><button class="link" data-act="classes">Добавить список</button></div>';return}
+  const pos={};c.students.forEach((s,i)=>pos[s.id]=i+1);const cur=L&&curStage(L),qq=q.trim().toLowerCase();
+  el.innerHTML=(c.demo?'<div class="demo">Пример с вымышленными учениками. Свой класс: ☰ → Классы и списки.</div>':'')+
+   order().filter(s=>!qq||s.n.toLowerCase().includes(qq)).map(s=>{
+    let st='none',txt='Нет урока',sg='';
+    if(L){const r=res(L,s.id);st=r.st;txt=ST_L[st];
+      if(st==='done')sg=`${r.sum}/${r.max}`;else if(st==='draft')txt+=` · ${r.sum}`;
+      if(cur&&scored(L,cur)&&st!=='abs'){const sr=stRes(L,s.id,cur);txt+=sr.n===sr.all?' · этап ✓':sr.n?' · этап …':''}}
+    return `<button class="srow s-${st}${s.id===D.ui.sid?' on':''}" data-sid="${s.id}"><span class="nm">${pos[s.id]}. ${esc(s.n)}</span><span class="ss"><i class="dot"></i>${txt}</span><span class="sg">${sg}</span></button>`}).join('')
+   ||'<div class="empty">Никого не нашли</div>'}
+function renderCard(c,L){const el=$('cardcol');rowIds=[];
+  if(!c||!L){el.innerHTML=`<div class="panel empty">${c?'Для этого класса ещё нет урока.':'Нет класса.'}<div class="btns" style="justify-content:center"><button class="pri" data-act="${c?'newLesson':'classes'}">${c?'Создать урок':'Создать класс'}</button></div></div>`;return}
+  const s=c.students.find(x=>x.id===D.ui.sid);
+  if(!s){el.innerHTML='<div class="panel empty">Выберите ученика в списке</div>';return}
+  const r=res(L,s.id),cur=curStage(L),abs=!!L.absent[s.id],pos=c.students.indexOf(s)+1;
+  const tot=r.st==='abs'?'<small>отсутствовал</small>':`${r.n?r.sum:'—'} <small>из ${r.max}</small>`;
+  const zero=r.st==='done'&&r.sum===0;
+  const bd=activeSt(L).map(x=>{const sr=stRes(L,s.id,x);
+    return `<button class="${x===cur?'on':''}" data-stage="${x.id}">${esc(x.short)} ${sr.n?sr.sum:'—'}/${sr.max}${sr.n&&sr.n<sr.all?` · ${sr.n} из ${sr.all}`:''}</button>`}).join('');
+  let body='';
+  if(abs)body=`<p class="note">Ученик отмечен как отсутствующий. Отметки сохранены, но в итог не идут.</p>`;
+  else if(L.skip[cur.id])body=`<p class="note">Этап отмечен как не проводившийся на этом уроке. Он не входит в максимум и не влияет на статус.</p><button data-act="skip">Вернуть этап</button>`;
+  else if(!sMax(cur))body=`<p class="note">Этап без баллов: отметки не ставятся. Можно дать устную обратную связь.</p>`;
+  else{const m=L.marks[s.id]||{};
+    cur.tasks.forEach(t=>{if(t.name)body+=`<div class="task">${esc(t.name)}</div>`;
+      t.descs.forEach(d=>{const v=m[d.id];rowIds.push(d.id);const k=rowIds.length-1;
+        body+=`<div class="drow${k===kRow?' kf':''}" data-row="${k}"><div class="dt">${esc(d.t)}
+          <button class="link sm" data-info="${d.id}">${openInfo.has(d.id)?'Скрыть уровни':'Уровни'}</button>
+          <span class="ds${v!=null?' set':''}">${v!=null?`Отмечено: ${v} из ${dmax(d)}`:'Не отмечено'}</span>
+          ${openInfo.has(d.id)?`<div class="lvtxt">${d.levels.map(l=>`<div><b>${l.v}</b> — ${esc(l.txt||'—')}</div>`).join('')}</div>`:''}</div>
+          <div class="lvs" role="group" aria-label="Уровень">${d.levels.map(l=>`<button class="lv${v===l.v?' on':''}" data-lv="${d.id}" data-v="${l.v}" aria-pressed="${v===l.v}" title="${esc(l.txt)}">${l.v}</button>`).join('')}
+          <button class="clr" data-clr="${d.id}" title="Снять отметку" aria-label="Снять отметку"${v==null?' disabled':''}>×</button></div></div>`})});
+    body+=`<div class="btns" style="justify-content:flex-start"><button class="link sm" data-act="skip" style="flex:0 0 auto">Этап не проводился на этом уроке</button></div>`}
+  if(kRow>=rowIds.length)kRow=0;
+  const phr=abs?[]:sDescs(cur).flatMap(d=>d.fb);
+  const fb=L.fb[s.id]||'';
+  el.innerHTML=`<div class="panel">
+    <div class="chead"><button class="link only-m back" data-act="toList">← Список учеников</button><div class="crow"><div><h2>${pos}. ${esc(s.n)}</h2>
+      <span class="chip s-${zero?'zero':r.st}">${zero?'Итог 0 — проверьте':ST_L[r.st]}</span></div><div class="tot">${tot}</div></div>
+      <div class="bd">${bd}</div>
+      <div class="cact"><button data-act="undo"${undoSt.length?'':' disabled'}>↶ Отменить</button><button data-act="absent">${abs?'Вернуть: присутствует':'Отсутствовал'}</button></div></div>
+    <div class="card"><h3 class="stname">${esc(cur.name)}</h3>${cur.note?`<p class="note">${esc(cur.note)}</p>`:''}${body}
+      <details class="fbk"${fb?' open':''}><summary>Обратная связь (необязательно)</summary>
+        ${phr.length?`<div class="phr">${phr.map((p,i)=>`<button data-ph="${i}">${esc(p)}</button>`).join('')}</div>`:''}
+        <textarea id="fbT" rows="2" placeholder="Можно оставить пустым, если обратная связь устная">${esc(fb)}</textarea></details>
+    </div></div>
+    <div class="nav"><button data-act="prev" aria-label="Предыдущий ученик" style="flex:0 0 52px">←</button>
+      <button data-act="nextU">Непроверенный</button><button class="pri" data-act="next">Следующий →</button></div>
+    <div class="keys">Клавиши: ↑↓ дескриптор · 0–9 уровень · Del снять · → / N следующий · Shift+N непроверенный · ← предыдущий · [ ] этап · Ctrl+Z отменить · / поиск</div>`;
+  el._phr=phr}
+
+/* ---------- actions ---------- */
+function setMark(did,v){const L=Lz(),sid=D.ui.sid;const m=L.marks[sid]=L.marks[sid]||{};
+  if(m[did]===v)return;undoSt.push({lid:L.id,sid,did,prev:m[did]});m[did]=v;kRow=Math.max(0,rowIds.indexOf(did));save();render()}
+function clearMark(did){const L=Lz(),sid=D.ui.sid,m=L.marks[sid];if(!m||m[did]==null)return;
+  undoSt.push({lid:L.id,sid,did,prev:m[did]});delete m[did];save();render()}
+function undo(){const u=undoSt.pop();if(!u)return toast('Нечего отменять');const L=D.lessons.find(l=>l.id===u.lid);if(!L)return;
+  if(u.abs!==undefined){if(u.abs)L.absent[u.sid]=true;else delete L.absent[u.sid]}
+  else{const m=L.marks[u.sid]=L.marks[u.sid]||{};if(u.prev==null)delete m[u.did];else m[u.did]=u.prev}
+  D.ui.lid=L.id;D.ui.sid=u.sid;save();render();toast('Отменено')}
+function go(sid){D.ui.sid=sid;D.ui.view='card';kRow=0;save();render();if(innerWidth<900)scrollTo({top:0})}
+function step(d){const o=order();if(!o.length)return;let i=o.findIndex(s=>s.id===D.ui.sid)+d;
+  if(i>=o.length){i=0;toast('Конец списка, снова первый ученик')}if(i<0)i=o.length-1;go(o[i].id)}
+function nextUnchecked(){const L=Lz();if(!L)return;const s=curStage(L);
+  if(!scored(L,s))return toast('На этом этапе нет баллов');const o=order(),i=o.findIndex(x=>x.id===D.ui.sid);
+  for(let k=1;k<=o.length;k++){const p=o[(i+k)%o.length];if(L.absent[p.id])continue;const r=stRes(L,p.id,s);if(r.n<r.all){if(p.id===D.ui.sid&&k<o.length)continue;return go(p.id)}}
+  toast('Все ученики на этом этапе проверены')}
+function setStage(id){D.ui.stage=id;kRow=0;save();render()}
+
+document.addEventListener('click',async e=>{const t=e.target.closest('button,[data-act]');if(!t)return;const ds=t.dataset;
+  if(ds.stage)return setStage(ds.stage);
+  if(ds.sid)return go(ds.sid);
+  if(ds.lv)return setMark(ds.lv,+ds.v);
+  if(ds.clr)return clearMark(ds.clr);
+  if(ds.info){openInfo.has(ds.info)?openInfo.delete(ds.info):openInfo.add(ds.info);return render()}
+  if(ds.ph!=null){const p=$('cardcol')._phr[+ds.ph],ta=$('fbT');ta.value=(ta.value.trim()?ta.value.trim()+' ':'')+p;saveFb();ta.focus();return}
+  const a=ds.act;if(!a)return;const L=Lz();
+  if(a==='next')step(1);else if(a==='prev')step(-1);else if(a==='nextU')nextUnchecked();
+  else if(a==='toList'){D.ui.view='list';save();render()}
+  else if(a==='undo')undo();
+  else if(a==='absent'){const sid=D.ui.sid;undoSt.push({lid:L.id,sid,abs:!!L.absent[sid]});if(L.absent[sid])delete L.absent[sid];else L.absent[sid]=true;save();render()}
+  else if(a==='skip'){const s=curStage(L);if(L.skip[s.id])delete L.skip[s.id];else{if(!await ask('Этап не проводился?',`«${s.name}» не войдёт в максимум и статус у всех учеников этого урока. Уже поставленные отметки сохранятся.`))return;L.skip[s.id]=true}save();render()}
+  else if(ACT[a])ACT[a](t)});
+let fbT=0;function saveFb(){const L=Lz(),v=$('fbT').value;if(v.trim())L.fb[D.ui.sid]=v;else delete L.fb[D.ui.sid];save()}
+document.addEventListener('input',e=>{if(e.target.id==='fbT'){clearTimeout(fbT);fbT=setTimeout(saveFb,400)}
+  if(e.target.id==='q'){q=e.target.value;renderList(C(),Lz())}});
+$('bSort').onclick=()=>{D.ui.sort=D.ui.sort==='az'?'list':'az';save();render()};
+
+document.addEventListener('keydown',e=>{
+  if(e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
+  if(!$('ovQ').hidden||!$('ov').hidden){if(e.key==='Escape'){$('ovQ').hidden?closeModal():$('qNo').click()}return}
+  const L=Lz();if(!L)return;const c=e.code,k=e.key;
+  if((e.ctrlKey||e.metaKey)&&c==='KeyZ'){e.preventDefault();return undo()}
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(k==='ArrowDown'||k==='ArrowUp'){if(!rowIds.length)return;e.preventDefault();kRow=(kRow+(k==='ArrowDown'?1:-1)+rowIds.length)%rowIds.length;render();
+    const r=document.querySelector('.drow.kf');r&&r.scrollIntoView({block:'nearest'});return}
+  if(/^Digit\d$|^Numpad\d$/.test(c)){const did=rowIds[kRow];if(!did||L.absent[D.ui.sid])return;const v=+c.slice(-1);
+    const d=sDescs(curStage(L)).find(x=>x.id===did);if(d&&d.levels.some(l=>l.v===v))setMark(did,v);else toast('Нет такого уровня');return}
+  if(k==='Delete'||k==='Backspace'){const did=rowIds[kRow];if(did){e.preventDefault();clearMark(did)}return}
+  if(k==='ArrowRight'||c==='KeyN'){e.preventDefault();return e.shiftKey?nextUnchecked():step(1)}
+  if(k==='ArrowLeft'||c==='KeyP'){e.preventDefault();return step(-1)}
+  if(c==='BracketLeft'||c==='BracketRight'){const i=L.stages.indexOf(curStage(L))+(c==='BracketRight'?1:-1);if(L.stages[i])setStage(L.stages[i].id);return}
+  if(c==='Slash'){e.preventDefault();$('q').focus()}});
+
+/* ---------- modals ---------- */
+const ACT={};
+ACT.menu=()=>modal(`<h2>Меню</h2><div class="mlist">
+  <button data-act="newLesson">Новый урок</button><button data-act="history">История уроков</button>
+  <button data-act="lessonInfo">Тема, дата и цель урока</button><button data-act="editLesson">Критерии этого урока</button>
+  <button data-act="classes">Классы и списки учеников</button><button data-act="templates">Шаблоны</button>
+  <button data-act="backup">Резервная копия</button></div><div class="btns"><button data-act="close">Закрыть</button></div>`);
+ACT.close=closeModal;
+$('bMenu').onclick=ACT.menu;$('bClass').onclick=()=>ACT.classes();$('bLesson').onclick=()=>Lz()?ACT.lessonInfo():ACT.newLesson();$('bRes').onclick=()=>ACT.results();
+
+ACT.lessonInfo=()=>{const L=Lz();if(!L)return ACT.newLesson();
+  modal(`<h2>Урок</h2><label class="fl">Дата<input type="date" id="liD" value="${L.date}"></label>
+   <label class="fl">Тема<input type="text" id="liT" value="${esc(L.topic)}"></label>
+   <label class="fl">Цель обучения<textarea id="liG" rows="2">${esc(L.goal)}</textarea></label>
+   <div class="sum">Максимум за урок: <b>${lMax(L)}</b> б. · этапов: ${L.stages.length}</div>
+   <div class="btns"><button data-act="editLesson">Критерии этого урока</button><button data-act="history">История</button><button class="pri" data-act="liSave">Сохранить</button></div>`)};
+ACT.liSave=()=>{const L=Lz();L.date=$('liD').value||L.date;L.topic=$('liT').value.trim();L.goal=$('liG').value.trim();save();closeModal();render()};
+
+ACT.newLesson=()=>{const c=C();if(!c)return ACT.classes();
+  const prev=D.lessons.filter(l=>l.cid===c.id).sort((a,b)=>b.created-a.created);
+  const opts=D.templates.map(t=>`<option value="t:${t.id}">Шаблон: ${esc(t.name)}</option>`).join('')+
+    prev.map(l=>`<option value="l:${l.id}">Копия урока: ${fmtD(l.date)} · ${esc(l.topic||'без темы')}</option>`).join('');
+  modal(`<h2>Новый урок · ${esc(c.name)}</h2>
+   <label class="fl">Основа урока<select id="nlS">${opts}</select></label>
+   <label class="fl">Дата<input type="date" id="nlD" value="${today()}"></label>
+   <label class="fl">Тема<input type="text" id="nlT" placeholder="Возьмётся из шаблона, если оставить пустой"></label>
+   <p class="mut sm">Новый урок — отдельная запись: прошлые уроки сохраняются в истории. Копия урока переносит этапы, задания и дескрипторы, отметки учеников начинаются с нуля.</p>
+   <div class="btns"><button data-act="close">Отмена</button><button class="pri" data-act="nlCreate">Создать урок</button></div>`);
+  const fill=()=>{const v=$('nlS').value;let tp='';if(v[0]==='t'){const t=D.templates.find(x=>x.id===v.slice(2));tp=parseTpl(t.txt).T.topic}else{tp=D.lessons.find(x=>x.id===v.slice(2)).topic}$('nlT').value=tp};
+  $('nlS').onchange=fill;fill()};
+ACT.nlCreate=()=>{const v=$('nlS').value,src=v[0]==='t'?{tpl:v.slice(2)}:{lesson:v.slice(2)};
+  const L=makeLesson(D.ui.cid,$('nlD').value,$('nlT').value.trim(),src);D.ui.lid=L.id;D.ui.stage=null;undoSt=[];save();closeModal();render();toast('Урок создан')};
+
+ACT.history=()=>{const c=C();if(!c)return;const ls=D.lessons.filter(l=>l.cid===c.id).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
+  const ar=D.archive.filter(a=>a.cid===c.id);
+  modal(`<h2>История · ${esc(c.name)}</h2><div class="mlist">${ls.map(l=>{const cnt={done:0,draft:0};c.students.forEach(s=>{const r=res(l,s.id);if(cnt[r.st]!=null)cnt[r.st]++});
+    return `<div class="mitem${l.id===D.ui.lid?' on':''}"><button data-act="openL" data-id="${l.id}">${fmtD(l.date)} · ${esc(l.topic||'без темы')}<br><span class="mut sm">проверено ${cnt.done}, черновиков ${cnt.draft} · максимум ${lMax(l)}</span></button><button data-act="delL" data-id="${l.id}" aria-label="Удалить урок">×</button></div>`}).join('')||'<p class="mut">Уроков пока нет.</p>'}</div>
+   ${ar.map(a=>`<h3>${esc(a.label)} · ${fmtD(a.date)}</h3><div class="tw"><table><tr><th>ФИО</th>${a.stages.map(s=>`<th>${esc(s)}</th>`).join('')}<th>Итог</th></tr>${a.rows.map(r=>`<tr><td>${esc(r.n)}</td>${r.per.map(p=>`<td>${p}</td>`).join('')}<td class="sc">${r.total}</td></tr>`).join('')}</table></div>`).join('')}
+   <div class="btns"><button data-act="close">Закрыть</button><button class="pri" data-act="newLesson">Новый урок</button></div>`)};
+ACT.openL=t=>{D.ui.lid=t.dataset.id;D.ui.stage=null;undoSt=[];save();closeModal();render()};
+ACT.delL=async t=>{const l=D.lessons.find(x=>x.id===t.dataset.id);if(!await ask('Удалить урок?',`${fmtD(l.date)} · ${l.topic||'без темы'}. Все отметки этого урока удалятся.`,'Удалить'))return;
+  D.lessons=D.lessons.filter(x=>x!==l);save();render();ACT.history()};
+
+/* results */
+ACT.results=()=>{const c=C(),L=Lz();if(!c||!L)return toast('Сначала создайте урок');
+  const rows=c.students.map((s,i)=>({i:i+1,s,r:res(L,s.id)}));const cnt={none:0,draft:0,done:0,abs:0};rows.forEach(x=>cnt[x.r.st]++);
+  const zeros=rows.filter(x=>x.r.st==='done'&&x.r.sum===0).length;
+  modal(`<h2>Итоги для BilimClass</h2>
+   <div class="sum">${esc(c.name)} · ${fmtD(L.date)} · ${esc(L.topic||'без темы')} · максимум <b>${lMax(L)}</b><br>
+   Проверено: <b>${cnt.done}</b> · черновики: <b>${cnt.draft}</b> · не проверены: <b>${cnt.none}</b> · отсутствовали: <b>${cnt.abs}</b>
+   ${zeros?`<br><span class="warn">Итог 0 у ${zeros} уч. — проверьте перед переносом.</span>`:''}</div>
+   <p class="mut sm">Порядок — как в исходном списке класса. Балл для переноса есть только у проверенных. У черновиков, непроверенных и отсутствующих поле пустое.</p>
+   <div class="tw"><table><tr><th>№</th><th>ФИО</th><th>Статус</th><th style="text-align:right">Балл</th></tr>
+   ${rows.map(x=>{const z=x.r.st==='done'&&x.r.sum===0;return `<tr class="${x.r.st==='draft'?'r-draft':z?'r-zero':''}"><td>${x.i}</td><td>${esc(x.s.n)}
+     <details><summary>по этапам</summary>${activeSt(L).map(s=>{const q=stRes(L,x.s.id,s);return `${esc(s.short)} ${q.n?q.sum:'—'}/${q.max}${q.n&&q.n<q.all?` (${q.n} из ${q.all})`:''}`}).join(' · ')}${L.fb[x.s.id]?`<br><span class="mut">${esc(L.fb[x.s.id])}</span>`:''}</details></td>
+     <td>${z?'Проверен · итог 0':ST_L[x.r.st]}${x.r.st==='draft'?` (${x.r.sum} б., ${x.r.n} из ${x.r.all})`:''}</td><td class="sc">${transfer(x.r)}</td></tr>`}).join('')}</table></div>
+   <div class="btns"><button data-act="cpRows">Копировать «ФИО + балл»</button><button data-act="cpScores">Копировать баллы столбцом</button><button data-act="xls">Excel</button><button class="pri" data-act="close">Закрыть</button></div>`)};
+const resRows=()=>{const c=C(),L=Lz();return c.students.map(s=>({s,r:res(L,s.id)}))};
+async function copy(txt){try{await navigator.clipboard.writeText(txt);toast('Скопировано')}catch(e){
+  modal(`<h2>Скопируйте вручную</h2><textarea id="cpT" rows="12">${esc(txt)}</textarea><div class="btns"><button class="pri" data-act="results">Назад к итогам</button></div>`);$('cpT').select()}}
+ACT.cpRows=()=>copy(resRows().map(x=>`${x.s.n}\t${transfer(x.r)}`).join('\n'));
+ACT.cpScores=()=>copy(resRows().map(x=>transfer(x.r)).join('\n'));
 let dl=null;(async()=>{try{dl=await window.claude?.use?.('downloads')}catch(e){}})();
-$('bXls').onclick=async()=>{
-  const head=['№','Ученик',...S.desc.map(d=>`${S.stages[d.st]}: ${d.t} (${d.p})`),...S.stages.map(n=>'Итого: '+n),'Баллы','Оценка'];
-  const ws=XLSX.utils.aoa_to_sheet([head,...S.students.map((s,i)=>[i+1,s.n,...S.desc.map((d,j)=>s.c[j]||0),...S.stages.map((n,k)=>stTot(s,k)),total(s),val(s)])]);
-  ws['!cols']=[{wch:4},{wch:28},...S.desc.map(()=>({wch:14})),...S.stages.map(()=>({wch:12})),{wch:8},{wch:8}];
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Итоги');
-  const name=`Баллы_${new Date().toLocaleDateString('ru-RU')}.xlsx`;
-  if(dl){try{await dl.save({filename:name,data:XLSX.write(wb,{type:'array',bookType:'xlsx'})});toast('Файл сохранён')}
-    catch(e){if(e&&e.code!=='declined')toast('Сохранить файл здесь не получилось')}}
-  else{try{XLSX.writeFile(wb,name)}catch(e){toast('Сохранить файл здесь не получилось')}}};
 async function saveFile(name,data,mime){
   if(dl){try{await dl.save({filename:name,data});toast('Файл сохранён');return true}catch(e){if(e&&e.code!=='declined')toast('Сохранить файл здесь не получилось');return false}}
   try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:mime}));a.download=name;document.body.appendChild(a);a.click();
-    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);toast('Файл сохранён в «Загрузки»');return true}catch(e){toast('Сохранить файл здесь не получилось');return false}}
-const lastBak=()=>{try{const t=+localStorage.getItem('ocenka_bak');$('bLast').textContent=t?'Последняя копия: '+new Date(t).toLocaleString('ru-RU'):'Копию ещё не сохраняли.'}catch(e){$('bLast').textContent=''}};
-$('bBak').onclick=()=>{lastBak();show('ovB')};
-$('bSaveBak').onclick=async()=>{if(demo)return toast('Сначала добавьте свой класс');const {students,...rest}=S;
-  if(await saveFile(`Баллы_копия_${new Date().toLocaleDateString('ru-RU')}.json`,JSON.stringify({app:'ocenka',v:1,data:rest}),'application/json')){try{localStorage.setItem('ocenka_bak',Date.now())}catch(e){}lastBak()}};
-$('bLoad').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;e.target.value='';
-  try{const j=JSON.parse(await f.text()),x=j&&j.data;if(!x||!x.classes||!x.desc)throw 0;
-    $('ovB').hidden=true;
-    if(!await ask('Восстановить из копии?',`В копии классов: ${Object.keys(x.classes).length}. Текущие данные на этом устройстве заменятся.`)){show('ovB');return}
-    if(!x.stages)x.stages=null;S=Object.assign(S,x);link();migrate();demo=false;save();render();toast('Данные восстановлены')}
-  catch(err){toast('Это не файл копии. Выберите файл «Баллы_копия_….json»')}});
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);toast('Файл сохранён в «Загрузки»');return true}catch(e){toast('Сохранить файл здесь не получилось');return false}}
+ACT.xls=()=>{if(!window.XLSX)return toast('Excel не загрузился: нужен интернет');const c=C(),L=Lz(),st=activeSt(L);
+  const aoa=[['Класс',c.name],['Дата',fmtD(L.date)],['Тема',L.topic],['Максимум',lMax(L)],[],
+    ['№','ФИО','Статус',...st.map(s=>`${s.short} (из ${sMax(s)})`),'Балл для BilimClass','Сумма (в т.ч. черновик)','Обратная связь']];
+  c.students.forEach((s,i)=>{const r=res(L,s.id);aoa.push([i+1,s.n,ST_L[r.st],...st.map(x=>{const q=stRes(L,s.id,x);return q.n?q.sum:''}),transfer(r),r.n?r.sum:'',L.fb[s.id]||''])});
+  const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:5},{wch:32},{wch:14},...st.map(()=>({wch:12})),{wch:12},{wch:12},{wch:40}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Итоги');
+  saveFile(`Итоги_${c.name}_${fmtD(L.date)}.xlsx`.replace(/[\\/:*?"<>|]/g,'_'),XLSX.write(wb,{type:'array',bookType:'xlsx'}),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')};
+
+/* classes & import */
+ACT.classes=()=>{const c=C();
+  modal(`<h2>Классы и списки</h2><div class="mlist">${D.classes.map(k=>`<div class="mitem${k===c?' on':''}"><button data-act="openC" data-id="${k.id}">${esc(k.name)} <span class="mut sm">· ${k.students.length} уч.</span></button><button data-act="delC" data-id="${k.id}" aria-label="Удалить класс">×</button></div>`).join('')}</div>
+   <label class="fl" style="margin-top:12px">Новый класс<input type="text" id="cN" placeholder="Например, 9Ә"></label>
+   <div class="btns"><button data-act="addC">Создать класс</button>${c?'<button data-act="renC">Переименовать текущий</button>':''}</div>
+   ${c?`<h3>Ученики: ${esc(c.name)} (${c.students.length})</h3>
+   <div class="btns"><label class="btn">Загрузить Excel / Word<input type="file" id="cF" accept=".xlsx,.xls,.csv,.docx,.txt"></label></div>
+   <label class="fl" style="margin-top:10px">Или вставьте список из BilimClass / введите вручную (одно ФИО на строку)<textarea id="cP" rows="6">${esc(c.students.map(s=>s.n).join('\n'))}</textarea></label>
+   <div class="btns"><button class="pri" data-act="pvPaste">Предпросмотр</button></div>`:''}
+   <div class="btns"><button data-act="close">Закрыть</button></div>`);
+  const f=$('cF');if(f)f.onchange=importFile};
+ACT.openC=t=>{D.ui.cid=t.dataset.id;D.ui.lid=null;D.ui.stage=null;undoSt=[];save();render();ACT.classes()};
+ACT.addC=()=>{const n=$('cN').value.trim();if(!n)return toast('Введите название класса');const k={id:uid(),name:n,students:[]};D.classes.push(k);D.ui.cid=k.id;D.ui.lid=null;save();render();ACT.classes();toast('Класс создан. Добавьте список учеников')};
+ACT.renC=()=>{const n=$('cN').value.trim();if(!n)return toast('Впишите новое название в поле «Новый класс»');C().name=n;save();render();ACT.classes()};
+ACT.delC=async t=>{const k=D.classes.find(x=>x.id===t.dataset.id);$('ov').hidden=true;
+  if(await ask(`Удалить класс «${k.name}»?`,'Список учеников и все уроки этого класса удалятся. Сначала можно сохранить резервную копию.','Удалить')){
+    D.classes=D.classes.filter(x=>x!==k);D.lessons=D.lessons.filter(l=>l.cid!==k.id);D.archive=D.archive.filter(a=>a.cid!==k.id);save();render()}ACT.classes()};
+const HEAD=/^(№|n|no|фио|ф\.и\.о\.?|имя|ученик|ученики|фамилия|аты-жөні|аты жөні|оқушы|оқушылар|список.*|класс.*|сынып.*)$/i,LET=/[a-zа-яёәіңғүұқөһ]/i;
+function clean(arr){const out=[];arr.forEach(x=>{x=String(x).trim().replace(/^\d+[\.\)]?\s*/,'').replace(/\s+/g,' ');
+  if(x&&LET.test(x)&&x.length<80&&!HEAD.test(x))out.push(x)});return out}
+async function importFile(e){const f=e.target.files[0];if(!f)return;e.target.value='';
+  try{let names=[];const ext=f.name.split('.').pop().toLowerCase();
+    if(ext==='docx'){if(!window.mammoth)throw 0;names=(await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value.split('\n')}
+    else if(ext==='txt')names=(await f.text()).split('\n');
+    else{if(!window.XLSX)throw 0;const wb=XLSX.read(await f.arrayBuffer());
+      XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''}).forEach(r=>{const c=r.find(v=>typeof v==='string'&&LET.test(v)&&!HEAD.test(v.trim()));if(c)names.push(c)})}
+    preview(clean(names))}catch(err){toast('Не удалось прочитать файл. Сохраните его как .xlsx или .docx')}}
+ACT.pvPaste=()=>preview(clean($('cP').value.split('\n')));
+let pending=null;
+function preview(names){const c=C();if(!names.length)return toast('Имён не найдено');
+  const pool={};c.students.forEach(s=>(pool[s.n]=pool[s.n]||[]).push(s));let same=0;
+  const next=names.map(n=>{const p=pool[n];if(p&&p.length){same++;return p.shift()}return{id:uid(),n}});
+  const gone=Object.values(pool).flat().length;pending=next;
+  modal(`<h2>Предпросмотр · ${esc(c.name)}</h2><div class="sum">Учеников в новом списке: <b>${names.length}</b> · совпали с текущими: <b>${same}</b> · новых: <b>${names.length-same}</b>${gone?` · <span class="warn">уйдут из списка: ${gone}</span> (их отметки в прошлых уроках сохранятся)`:''}</div>
+   <p class="mut sm">Порядок строк ниже станет порядком итогов для BilimClass.</p><ol class="pv">${names.map(n=>`<li>${esc(n)}</li>`).join('')}</ol>
+   <div class="btns"><button data-act="classes">Назад</button><button class="pri" data-act="pvSave">Сохранить список</button></div>`)}
+ACT.pvSave=()=>{const c=C();c.students=pending;delete c.demo;pending=null;save();closeModal();render();toast('Список сохранён')};
+
+/* templates & criteria editor */
+let edMode=null;
+const HELP=`<details class="sm" style="margin:6px 0"><summary>Как записывать</summary><div class="lvtxt">
+<div><b>Тақырып:</b> тема · <b>Мақсат:</b> цель обучения</div>
+<div><b># Қысқа | Толық атауы</b> — этап урока (короткое имя для вкладки | полное). Этап без дескрипторов идёт без баллов, например «# Рефлексия».</div>
+<div><b>* текст</b> — пояснение к этапу · <b>## Тапсырма</b> — задание</div>
+<div><b>- Дескриптор</b> — наблюдаемый результат, ниже уровни: <b>0: …</b>, <b>1: …</b>, <b>2: …</b> (можно только 0 и 1)</div>
+<div><b>&gt; фраза</b> — готовая обратная связь к дескриптору</div>
+<div>Порядок строк = порядок этапов. Чтобы переставить этап, перенесите его блок.</div></div></details>`;
+function edSummary(){const {T,warn}=parseTpl($('edT').value);let tot=0;
+  const lines=T.stages.map(s=>{const m=sMax(s);tot+=m;return `${esc(s.short)}: ${m?`<b>${m}</b> б. · ${sDescs(s).length} дескр.`:'без баллов'}`});
+  $('edS').innerHTML=`${lines.join('<br>')}<br>Итого за урок: <b>${tot}</b> б.${tot!==10?' <span class="warn">(для ФО обычно 10)</span>':''}${warn.length?`<div class="warn" style="margin-top:6px">${warn.map(esc).join('<br>')}</div>`:''}`}
+ACT.templates=(t)=>{const id=(t&&t.dataset&&t.dataset.id)||(edMode&&edMode.tpl)||D.templates[0].id;const tp=D.templates.find(x=>x.id===id)||D.templates[0];edMode={tpl:tp.id};
+  modal(`<h2>Шаблоны</h2><label class="fl">Шаблон<select id="edSel">${D.templates.map(x=>`<option value="${x.id}"${x===tp?' selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+   <label class="fl">Название<input type="text" id="edN" value="${esc(tp.name)}"></label>${HELP}
+   <textarea class="ed" id="edT" spellcheck="false">${esc(tp.txt)}</textarea><div class="sum" id="edS"></div>
+   <p class="mut sm">Изменения шаблона применяются только к новым урокам. Сохранённые уроки хранят свои критерии.</p>
+   <div class="btns"><button data-act="tplDup">Копия как новый шаблон</button><button data-act="tplDel">Удалить шаблон</button><button data-act="close">Закрыть</button><button class="pri" data-act="tplSave">Сохранить</button></div>`);
+  $('edSel').onchange=()=>ACT.templates({dataset:{id:$('edSel').value}});$('edT').oninput=edSummary;edSummary()};
+ACT.tplSave=()=>{const {T,warn}=parseTpl($('edT').value);if(!T.stages.length)return toast(warn[0]);const tp=D.templates.find(x=>x.id===edMode.tpl);
+  tp.name=$('edN').value.trim()||tp.name;tp.txt=$('edT').value;save();toast(warn.length?'Сохранено. Есть замечания':'Шаблон сохранён');ACT.templates({dataset:{id:tp.id}})};
+ACT.tplDup=()=>{const n={id:uid(),name:($('edN').value.trim()||'Шаблон')+' (копия)',txt:$('edT').value};D.templates.push(n);save();ACT.templates({dataset:{id:n.id}})};
+ACT.tplDel=async()=>{if(D.templates.length<2)return toast('Нужен хотя бы один шаблон');const tp=D.templates.find(x=>x.id===edMode.tpl);$('ov').hidden=true;
+  if(await ask('Удалить шаблон?',`«${tp.name}». Уроки, созданные по нему, не изменятся.`,'Удалить')){D.templates=D.templates.filter(x=>x!==tp);edMode=null;save()}ACT.templates()};
+ACT.editLesson=()=>{const L=Lz();if(!L)return toast('Сначала создайте урок');
+  modal(`<h2>Критерии этого урока</h2><p class="mut sm">Правка касается только урока ${fmtD(L.date)}. Отметки сохраняются у дескрипторов с тем же этапом, заданием и формулировкой.</p>${HELP}
+   <textarea class="ed" id="edT" spellcheck="false">${esc(serTpl(L))}</textarea><div class="sum" id="edS"></div>
+   <div class="btns"><button data-act="lsToTpl">Сохранить как шаблон</button><button data-act="close">Отмена</button><button class="pri" data-act="lsSave">Применить к уроку</button></div>`);
+  $('edT').oninput=edSummary;edSummary()};
+ACT.lsSave=()=>{const L=Lz(),{T,warn}=parseTpl($('edT').value);if(!T.stages.length)return toast(warn[0]);
+  const key=(s,t,d)=>s.short+'|'+t.name+'|'+d.t,old={},oldSt={};
+  L.stages.forEach(s=>{oldSt[s.short]=s.id;s.tasks.forEach(t=>t.descs.forEach(d=>old[key(s,t,d)]=d.id))});
+  T.stages.forEach(s=>{if(oldSt[s.short])s.id=oldSt[s.short];s.tasks.forEach(t=>t.descs.forEach(d=>{const o=old[key(s,t,d)];if(o)d.id=o}))});
+  L.stages=T.stages;L.topic=T.topic||L.topic;L.goal=T.goal;save();closeModal();render();toast('Критерии урока обновлены')};
+ACT.lsToTpl=()=>{const n={id:uid(),name:(Lz().topic||'Урок')+' · шаблон',txt:$('edT').value};D.templates.push(n);save();toast('Шаблон сохранён');ACT.templates({dataset:{id:n.id}})};
+
+/* backup */
+ACT.backup=()=>{let t=0;try{t=+localStorage.getItem('ocenka_bak')}catch(e){}
+  modal(`<h2>Резервная копия</h2><p class="mut">Один файл со всеми классами, уроками, отметками и шаблонами. Отправьте его себе в WhatsApp или на Google Диск. Так данные можно перенести на другой телефон или восстановить после очистки браузера.</p>
+   <p class="mut sm">${t?'Последняя копия: '+new Date(t).toLocaleString('ru-RU'):'Копию ещё не сохраняли.'}</p>
+   <div class="btns"><button class="pri" data-act="bakSave">Сохранить копию</button><label class="btn">Восстановить из файла<input type="file" id="bkF" accept=".json,application/json"></label></div>
+   <div class="btns"><button data-act="close">Закрыть</button></div>`);$('bkF').onchange=restore};
+ACT.bakSave=async()=>{if(await saveFile(`Баллы_копия_${fmtD(today())}.json`,JSON.stringify({app:'ocenka',v:3,data:D}),'application/json')){try{localStorage.setItem('ocenka_bak',Date.now())}catch(e){}}};
+async function restore(e){const f=e.target.files[0];if(!f)return;e.target.value='';
+  try{const j=JSON.parse(await f.text()),x=j&&j.data;if(!j||j.app!=='ocenka'||!x)throw 0;closeModal();
+    if(!await ask('Восстановить из копии?','Текущие данные на этом устройстве заменятся данными из файла.','Восстановить'))return;
+    if(x.v===3&&Array.isArray(x.classes)){D=x}else{const keep=D;D=blankDB();if(!migrateOld(x)){D=keep;throw 0}}
+    save();render();toast('Данные восстановлены')}catch(err){toast('Это не файл копии «Баллы_копия_….json»')}}
+
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-render();
+addEventListener('resize',()=>document.documentElement.style.setProperty('--toph',$('top').offsetHeight+'px'));
+load();render();
+if(D.ui.migrated===1){D.ui.migrated=2;save();toast('Списки классов перенесены. Старые баллы — в «Истории уроков»')}
 </script>
 
 </body>
