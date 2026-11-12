@@ -83,6 +83,7 @@ td.p{color:var(--mut);text-align:right;width:60px}
     <button id="bScale">🎯 Шкала</button>
     <button id="bSort">А→Я</button>
     <button id="bNew">🔄 Новый урок</button>
+    <button id="bBak">📦 Копия</button>
   </div>
   <div class="chips" id="stBar"></div>
 </header>
@@ -144,6 +145,15 @@ td.p{color:var(--mut);text-align:right;width:60px}
     <input type="text" id="kNew" placeholder="Например, 7А" style="width:100%;font:inherit;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)">
   </label>
   <div class="row"><button id="kRen">Переименовать текущий</button><button class="pri" id="kAdd">Создать класс</button></div>
+  <div class="row"><button data-close>Закрыть</button></div>
+</div></div>
+
+<div class="ov" id="ovB" hidden><div class="md">
+  <h2>Резервная копия</h2>
+  <p class="hint">Копия сохраняет в один файл все классы, списки учеников, баллы, этапы, дескрипторы и шкалу. Отправьте файл себе в WhatsApp или положите на Google Диск. Если данные пропадут или нужно перенести их на другой телефон, нажмите «Восстановить» и выберите этот файл.</p>
+  <p class="hint" id="bLast"></p>
+  <div class="row"><button class="pri" id="bSaveBak">💾 Сохранить копию</button>
+    <label class="btn" style="text-align:center">📂 Восстановить<input type="file" id="bLoad" accept=".json,application/json"></label></div>
   <div class="row"><button data-close>Закрыть</button></div>
 </div></div>
 
@@ -294,6 +304,21 @@ $('bXls').onclick=async()=>{
   if(dl){try{await dl.save({filename:name,data:XLSX.write(wb,{type:'array',bookType:'xlsx'})});toast('Файл сохранён')}
     catch(e){if(e&&e.code!=='declined')toast('Сохранить файл здесь не получилось')}}
   else{try{XLSX.writeFile(wb,name)}catch(e){toast('Сохранить файл здесь не получилось')}}};
+async function saveFile(name,data,mime){
+  if(dl){try{await dl.save({filename:name,data});toast('Файл сохранён');return true}catch(e){if(e&&e.code!=='declined')toast('Сохранить файл здесь не получилось');return false}}
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:mime}));a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);toast('Файл сохранён в «Загрузки»');return true}catch(e){toast('Сохранить файл здесь не получилось');return false}}
+const lastBak=()=>{try{const t=+localStorage.getItem('ocenka_bak');$('bLast').textContent=t?'Последняя копия: '+new Date(t).toLocaleString('ru-RU'):'Копию ещё не сохраняли.'}catch(e){$('bLast').textContent=''}};
+$('bBak').onclick=()=>{lastBak();show('ovB')};
+$('bSaveBak').onclick=async()=>{if(demo)return toast('Сначала добавьте свой класс');const {students,...rest}=S;
+  if(await saveFile(`Баллы_копия_${new Date().toLocaleDateString('ru-RU')}.json`,JSON.stringify({app:'ocenka',v:1,data:rest}),'application/json')){try{localStorage.setItem('ocenka_bak',Date.now())}catch(e){}lastBak()}};
+$('bLoad').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;e.target.value='';
+  try{const j=JSON.parse(await f.text()),x=j&&j.data;if(!x||!x.classes||!x.desc)throw 0;
+    $('ovB').hidden=true;
+    if(!await ask('Восстановить из копии?',`В копии классов: ${Object.keys(x.classes).length}. Текущие данные на этом устройстве заменятся.`)){show('ovB');return}
+    if(!x.stages)x.stages=null;S=Object.assign(S,x);link();migrate();demo=false;save();render();toast('Данные восстановлены')}
+  catch(err){toast('Это не файл копии. Выберите файл «Баллы_копия_….json»')}});
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 render();
 </script>
 
