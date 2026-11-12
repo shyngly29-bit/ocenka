@@ -146,8 +146,9 @@ td.p{color:var(--mut);text-align:right;width:60px}
 
 <script>
 const KEY='ocenka_v2',$=id=>document.getElementById(id);
-const DEF_ST=['1. Алдыңғы тақырыпты байланыстыру (сұрау)','2. Жаңа тақырыпқа өту','3. Жаңа тақырыпты талқылау','4. Бекіту'];
-const DEF_DESC=[
+const DEF_ST=['1. Алдыңғы тақырыпты байланыстыру (үй тапсырмасы, сұрау)','2. Жаңа тақырыпқа өту','3. Жаңа тақырыпты талқылау','4. Бекіту'];
+const HW=[{t:'Үй тапсырмасын толық орындады',p:2,st:0},{t:'Үй тапсырмасын жартылай орындады',p:1,st:0}];
+const DEF_DESC=[...HW,
   {t:'Сұраққа толық жауап берді',p:2,st:0},{t:'Жартылай жауап берді',p:1,st:0},{t:'Мысал келтірді',p:1,st:0},
   {t:'Тақырыпты/мақсатты болжады',p:1,st:1},{t:'Белсенді қатысты',p:1,st:1},
   {t:'Өз пікірін айтты',p:1,st:2},{t:'Дұрыс тұжырым жасады',p:2,st:2},{t:'Сұрақ қойды',p:1,st:2},
@@ -157,6 +158,11 @@ let S={students:[],max:20,mode:'10',thr:[{g:'5',min:17},{g:'4',min:13},{g:'3',mi
 function migrate(){
   if(!S.stages||!S.stages.length){S.stages=DEF_ST.slice();S.stage=0;S.desc=DEF_DESC.map(x=>({...x}));
     Object.values(S.classes||{}).forEach(a=>a.forEach(s=>s.c={}));(S.students||[]).forEach(s=>s.c={})}
+  if(!S.hw){S.hw=1;if(!S.desc.some(d=>/үй тапсырма/i.test(d.t))){const n=HW.length;
+    S.desc=[...HW.map(x=>({...x})),...S.desc];
+    const sh=s=>{const c={};Object.keys(s.c).forEach(k=>c[+k+n]=s.c[k]);s.c=c};
+    Object.values(S.classes||{}).forEach(a=>a.forEach(sh));if(S.students&&!Object.values(S.classes||{}).includes(S.students))S.students.forEach(sh);
+    if(S.stages[0]==='1. Алдыңғы тақырыпты байланыстыру (сұрау)')S.stages[0]=DEF_ST[0]}}
   S.desc.forEach(d=>{if(d.st==null||d.st>=S.stages.length)d.st=0});if(!(S.stage<S.stages.length))S.stage=0}
 const stTot=(s,k)=>S.desc.reduce((a,d,i)=>a+(d.st===k?(s.c[i]||0)*d.p:0),0);
 const chips=s=>S.stages.map((n,k)=>`<button class="chip${k===S.stage?' on':''}" data-stg="${k}">${esc(n)}${s?` · <b>${stTot(s,k)}</b>`:''}</button>`).join('');
