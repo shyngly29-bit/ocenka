@@ -41,18 +41,28 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
 .tab small{font-weight:500;color:var(--mut);font-size:12px}
 .tab.on{background:var(--ac);border-color:var(--ac);color:#fff}.tab.on small{color:#dbe6fb}
 /* main */
-.main{display:grid;grid-template-columns:300px minmax(0,1fr);gap:12px;padding-block:12px;align-items:start}
+.main{display:grid;grid-template-columns:380px minmax(0,1fr);gap:12px;padding-block:12px;align-items:start}
+#slist{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;padding:8px;align-content:start}
+#slist>.demo,#slist>.empty{grid-column:1/-1;margin:0}
+.tile{aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:space-between;align-items:stretch;text-align:left;padding:7px 8px;border-radius:14px;border:1.5px solid var(--line);min-height:0;min-width:0;font-weight:400;gap:2px}
+.tile .tno{font-size:12px;color:var(--mut);font-weight:600;font-variant-numeric:tabular-nums}
+.tile .tn{font-weight:600;font-size:14px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.tile .tv{font-size:22px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;display:flex;justify-content:space-between;align-items:baseline;gap:4px}
+.tile .tv small{font-size:11px;font-weight:600;color:var(--mut)}
+.tile.has{background:#f5f8ff}
+.tile.part .tv b::after{content:'…';color:var(--mut)}
+.tile.abs{background:var(--bg)}.tile.abs .tn{color:var(--mut)}.tile.abs .tv b{font-size:13px;color:var(--mut)}
+.tile.on{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}
+.snav{position:sticky;bottom:0;display:grid;grid-template-columns:1fr 1.6fr;gap:8px;background:var(--card);padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));margin-top:8px}
+.snav button{min-height:50px;font-size:16px}
+@media (min-width:900px){.only-m{display:none!important}}
+.utoast{display:flex;gap:12px;align-items:center;border-radius:14px}
+.utoast button{min-height:36px;padding:4px 12px;background:#fff;color:var(--tx)}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px}
 .listcol{position:sticky;top:calc(var(--toph) + 12px);height:calc(100vh - var(--toph) - 24px);display:flex;flex-direction:column}
 .lhead{display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--line)}
 .lhead button{white-space:nowrap;min-height:40px}
 #slist{overflow:auto;padding:4px;position:relative;flex:1}
-.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;width:100%;text-align:left;border:0;border-radius:8px;background:none;padding:7px 10px;font-weight:400;min-height:46px}
-.srow+.srow{margin-top:2px}
-.srow .nm{font-weight:600;overflow-wrap:anywhere}
-.srow .ss{grid-column:1;font-size:13px;color:var(--mut);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.srow .sg{grid-row:1/3;grid-column:2;align-self:center;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
-.srow.on{background:var(--acs);box-shadow:inset 4px 0 0 var(--ac)}
 .dot{width:8px;height:8px;border-radius:50%;background:#b8c1cc;flex:none}
 .s-draft .dot{background:#e09a1a}.s-done .dot{background:var(--ok)}.s-abs .dot{background:#8a94a3}
 .s-abs .nm{color:var(--mut)}
@@ -100,21 +110,21 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
 .mact{display:flex;flex-wrap:wrap;gap:6px}.mact button{font-size:14px;min-height:40px}
 .keys{font-size:12px;color:var(--mut)}
 .empty{padding:28px 16px;text-align:center;color:var(--mut)}
-.mbar{position:fixed;left:0;right:0;bottom:0;z-index:35;display:grid;grid-template-columns:1fr 1.6fr;gap:8px;background:var(--card);border-top:1px solid var(--line);
-  padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.mbar button{min-height:52px;font-size:16px}
 @media (max-width:899px){
   .main{grid-template-columns:minmax(0,1fr);padding-block:10px}
   .listcol{position:static;height:auto}
-  #slist{overflow:visible}
-  .v-card .listcol,.v-list .cardcol{display:none}
-  .v-card{padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+  #slist{overflow:visible;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .v-list .cardcol{display:none}
+  .cardcol{position:fixed;left:0;right:0;bottom:0;z-index:35;max-height:calc(100vh - var(--toph) - 6px);overflow:auto;overscroll-behavior:contain;
+    background:var(--card);border-radius:16px 16px 0 0;box-shadow:0 -6px 24px rgba(15,23,35,.18)}
+  .cardcol>.panel{border:0;border-radius:16px 16px 0 0}
+  .cardcol .card{padding:12px max(16px,env(safe-area-inset-left,0px)) 0}
+  .cardcol .more{margin-top:8px}
   .only-d,.keys{display:none}
   .tabs{flex-basis:100%;order:3}
   .cls{max-width:none;flex:1}
   .card{padding:10px 12px 12px}
 }
-@media (min-width:900px){.mbar{display:none!important}}
 @media (max-width:420px){.drow{grid-template-columns:minmax(0,1fr)}.lvs{justify-content:stretch}.lv{flex:1}.tab small{font-size:11px}}
 /* home */
 .home{padding-block:16px 32px}
@@ -179,7 +189,6 @@ ol.pv{margin:8px 0;padding-left:28px;max-height:40vh;overflow:auto}
   </section>
   <section class="cardcol" id="cardcol"></section>
 </main>
-<div class="mbar" id="mbar" hidden><button data-act="toList">Оқушылар</button><button class="pri" data-act="next">Келесі →</button></div>
 
 <div class="ov" id="ov" hidden><div class="md" id="md"></div></div>
 <div class="ov" id="ovQ" hidden><div class="md">
@@ -394,7 +403,7 @@ $('ov').addEventListener('click',e=>{if(e.target.id==='ov')closeModal()});
 /* ---------- render ---------- */
 function render(){fixUi();const c=C(),L=Lz();
   if(!L)D.ui.screen='home';const home=D.ui.screen==='home';
-  $('home').hidden=!home;$('top').hidden=home;$('main').hidden=home;$('mbar').hidden=home||D.ui.view!=='card';
+  $('home').hidden=!home;$('top').hidden=home;$('main').hidden=home;
   if(home)return renderHome(c,L);
   $('clsName').textContent=c.name;$('clsName').title='Сынып: '+c.name;
   $('bSort').textContent=D.ui.sort==='az'?'А–Я':'Тізім бойынша';$('bSort').title='Жұмыс экранындағы рет. Нәтижелерге әсер етпейді';
@@ -423,9 +432,11 @@ function renderList(c,L){const el=$('slist'),keep=el.scrollTop;
   const pos={};c.students.forEach((s,i)=>pos[s.id]=i+1);const s0=curStage(L),t0=curTask(L,s0),qq=q.trim().toLowerCase();
   el.innerHTML=(c.demo?'<div class="demo">Ойдан шығарылған оқушылармен мысал. Өз сыныбыңыз: ⌂ Басты → Оқушылар тізімі.</div>':'')+
    order().filter(s=>!qq||s.n.toLowerCase().includes(qq)).map(s=>{
-    const r=res(L,s.id);let txt=ST_L[r.st],sg=r.st==='done'?`${r.sum}/${r.max}`:r.st==='draft'?String(r.sum):'';
-    if(t0&&tOn(L,s0,t0)&&r.st!=='abs'){const tr=tRes(L,s.id,t0);txt+=tr.n===tr.all?' · ✓':tr.n?' · …':''}
-    return `<button class="srow s-${r.st}${s.id===D.ui.sid?' on':''}" data-sid="${s.id}" aria-current="${s.id===D.ui.sid}"><span class="nm">${pos[s.id]}. ${esc(s.n)}</span><span class="ss"><i class="dot"></i>${txt}</span><span class="sg">${sg}</span></button>`}).join('')
+    const r=res(L,s.id),on=s.id===D.ui.sid,sc=t0&&tOn(L,s0,t0);let cls='tile',big,small;
+    if(r.st==='abs'){cls+=' abs';big='Келмеді';small=''}
+    else if(sc){const tr=tRes(L,s.id,t0);big=tr.n?String(tr.sum):'—';if(tr.n)cls+=' has';if(tr.n&&tr.n<tr.all)cls+=' part';small=r.n?`Σ ${r.sum}`:''}
+    else{big=r.n?String(r.sum):'—';small=r.n?'Σ':''}
+    return `<button class="${cls}${on?' on':''}" data-sid="${s.id}" aria-current="${on}" title="${esc(s.n)}" aria-label="${pos[s.id]}. ${esc(s.n)}: ${big==='—'?'белгіленбеген':big}"><span class="tno">№ ${pos[s.id]}</span><span class="tn">${esc(shortN(s.n))}</span><span class="tv"><b>${big}</b><small>${small}</small></span></button>`}).join('')
    ||'<div class="empty">Ешкім табылмады</div>';
   el.scrollTop=keep}
 function renderCard(c,L){const el=$('cardcol');rowIds=[];
@@ -449,6 +460,7 @@ function renderCard(c,L){const el=$('cardcol');rowIds=[];
         <button class="clr" data-clr="${d.id}" title="Белгіні алу" aria-label="Белгіні алу"${v==null?' disabled':''}>×</button></div>
         ${op?`<div class="lvtxt">${d.levels.map(l=>`<div><b>${l.v}</b> — ${esc(l.txt||'—')}</div>`).join('')}</div>`:''}</div>`})}
   h+=`<div class="nextd only-d"><button class="pri" data-act="next">Келесі →</button></div>`;
+  const snav=`<div class="snav only-m"><button data-act="toList">Оқушылар</button><button class="pri" data-act="next">Келесі →</button></div>`;
   const phr=abs||!t?[]:t.descs.flatMap(d=>d.fb),fb=L.fb[s.id]||'';
   const bd=L.stages.filter(x=>sActMax(L,x)>0).map(x=>{const q=sRes(L,s.id,x);return `${esc(stS(x))} ${q.n?q.sum:'—'}/${q.max}${q.n&&q.n<q.all?` (${q.n} / ${q.all})`:''}`}).join(' · ');
   h+=`<details class="more" id="more"${openMore||fb?' open':''}><summary>Қосымша: кері байланыс, келмеді, тапсырма</summary><div class="mbody">
@@ -459,28 +471,35 @@ function renderCard(c,L){const el=$('cardcol');rowIds=[];
     <textarea id="fbT" rows="2" aria-label="Кері байланыс" placeholder="Кері байланыс (міндетті емес). Ауызша берсеңіз, бос қалдырыңыз">${esc(fb)}</textarea>
     <div class="mact"><button data-act="absent">${abs?'Келді':'Келмеді'}</button>${scoredT?'<button data-act="nextU">Келесі тексерілмеген</button><button data-act="skip">Тапсырма өткізілмеді</button>':''}</div>
     <div class="keys">Пернелер: Tab / Enter · ↑↓ дескриптор · 0–9 деңгей · Del белгіні алу · → / N келесі · Shift+N тексерілмеген · ← алдыңғы · [ ] кезең · Ctrl+Z болдырмау · / іздеу</div>
-  </div></details></div>`;
+  </div></details>${snav}</div>`;
   if(kRow>=rowIds.length)kRow=0;el.innerHTML=h;el._phr=phr;
   $('more').addEventListener('toggle',e=>openMore=e.target.open)}
 
 /* ---------- actions ---------- */
 function setMark(did,v){const L=Lz(),sid=D.ui.sid;const m=L.marks[sid]=L.marks[sid]||{};
-  if(m[did]===v)return;undoSt.push({lid:L.id,sid,did,prev:m[did]});m[did]=v;kRow=Math.max(0,rowIds.indexOf(did));save();render()}
+  const single=isM()&&curTask(L,curStage(L)).descs.length===1;
+  if(m[did]===v){if(single){D.ui.view='list';save();render()}return}
+  undoSt.push({lid:L.id,sid,did,prev:m[did]});m[did]=v;kRow=Math.max(0,rowIds.indexOf(did));
+  if(single)D.ui.view='list';save();render();
+  if(single){const c=C(),s=c.students.find(x=>x.id===sid);undoToast(`№ ${c.students.indexOf(s)+1} ${shortN(s.n)}: ${v}`)}}
+function undoToast(msg){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast utoast';t.setAttribute('role','status');
+  t.innerHTML=`<span>${esc(msg)}</span><button data-act="undo">Болдырмау</button>`;document.body.appendChild(t);
+  t.addEventListener('click',()=>setTimeout(()=>t.remove(),0));setTimeout(()=>t.remove(),4000)}
+function shortN(n){const p=String(n).trim().split(/\s+/);return p.length<2?n:`${p[1]} ${p[0][0]}.`}
 function clearMark(did){const L=Lz(),sid=D.ui.sid,m=L.marks[sid];if(!m||m[did]==null)return;
   undoSt.push({lid:L.id,sid,did,prev:m[did]});delete m[did];save();render()}
 function undo(){const u=undoSt.pop();if(!u)return toast('Болдыратын әрекет жоқ');const L=D.lessons.find(l=>l.id===u.lid);if(!L)return;
   if(u.abs!==undefined){if(u.abs)L.absent[u.sid]=true;else delete L.absent[u.sid]}
   else{const m=L.marks[u.sid]=L.marks[u.sid]||{};if(u.prev==null)delete m[u.did];else m[u.did]=u.prev}
   D.ui.lid=L.id;D.ui.sid=u.sid;save();render();toast('Болдырылмады')}
-function revealRow(){const c=$('slist'),r=c.querySelector('.srow.on');if(!r||isM())return;
+function revealRow(){const c=$('slist'),r=c.querySelector('.tile.on');if(!r||isM())return;
   if(r.offsetTop<c.scrollTop||r.offsetTop+r.offsetHeight>c.scrollTop+c.clientHeight)c.scrollTop=r.offsetTop-c.clientHeight/2+r.offsetHeight/2}
-function go(sid){if(isM()&&D.ui.view!=='card')listScroll=scrollY;D.ui.sid=sid;D.ui.view='card';kRow=0;save();render();
-  if(isM())scrollTo(0,0);else revealRow()}
+function go(sid,reveal){D.ui.sid=sid;D.ui.view='card';kRow=0;save();render();if(isM())$('cardcol').scrollTop=0;else if(reveal)revealRow()}
 function step(d){const o=order();if(!o.length)return;let i=o.findIndex(s=>s.id===D.ui.sid)+d;
-  if(i>=o.length){i=0;toast('Тізім соңы, қайтадан бірінші оқушы')}if(i<0)i=o.length-1;go(o[i].id)}
+  if(i>=o.length){i=0;toast('Тізім соңы, қайтадан бірінші оқушы')}if(i<0)i=o.length-1;go(o[i].id,true)}
 function nextUnchecked(){const L=Lz();if(!L)return;const s=curStage(L),t=curTask(L,s);
   if(!t||!tOn(L,s,t))return toast('Бұл тапсырмада балл жоқ');const o=order(),i=o.findIndex(x=>x.id===D.ui.sid);
-  for(let k=1;k<=o.length;k++){const p=o[(i+k)%o.length];if(L.absent[p.id])continue;const r=tRes(L,p.id,t);if(r.n<r.all)return go(p.id)}
+  for(let k=1;k<=o.length;k++){const p=o[(i+k)%o.length];if(L.absent[p.id])continue;const r=tRes(L,p.id,t);if(r.n<r.all)return go(p.id,true)}
   toast('Бұл тапсырма бойынша барлық оқушы тексерілді')}
 function setStage(id){D.ui.stage=id;kRow=0;save();render()}
 function setTask(id){const L=Lz();D.ui.taskBy[curStage(L).id]=id;kRow=0;save();render()}
@@ -496,7 +515,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest('button');i
   if(ds.ph!=null){const p=$('cardcol')._phr[+ds.ph],ta=$('fbT');ta.value=(ta.value.trim()?ta.value.trim()+' ':'')+p;saveFb();ta.focus();return}
   const a=ds.act;if(!a)return;const L=Lz();
   if(a==='next')step(1);else if(a==='prev')step(-1);else if(a==='nextU')nextUnchecked();
-  else if(a==='toList'){D.ui.view='list';save();render();if(isM())scrollTo(0,listScroll)}
+  else if(a==='toList'){D.ui.view='list';save();render()}
   else if(a==='undo')undo();
   else if(a==='absent'){const sid=D.ui.sid;undoSt.push({lid:L.id,sid,abs:!!L.absent[sid]});if(L.absent[sid])delete L.absent[sid];else L.absent[sid]=true;save();render()}
   else if(a==='skip'){const s=curStage(L),tk=curTask(L,s);if(L.skip[tk.id]||L.skip[s.id]){delete L.skip[tk.id];delete L.skip[s.id]}else{if(!await ask('Тапсырма өткізілмеді ме?',`«${tk.name}» осы сабақтың максимумына және барлық оқушының мәртебесіне кірмейді. Қойылған белгілер сақталады.`))return;L.skip[tk.id]=true}save();render()}
@@ -525,7 +544,7 @@ document.addEventListener('keydown',e=>{
 /* ---------- modals ---------- */
 const ACT={};
 ACT.close=closeModal;
-ACT.cont=()=>{D.ui.screen='work';D.ui.view=D.ui.sid?'card':'list';save();render();scrollTo(0,0);if(!isM())revealRow()};
+ACT.cont=()=>{D.ui.screen='work';D.ui.view=D.ui.sid?'card':'list';save();render();if(!isM())revealRow()};
 ACT.pickC=t=>{D.ui.cid=t.dataset.id;D.ui.lid=null;D.ui.stage=null;undoSt=[];save();render()};
 ACT.pickL=t=>{D.ui.lid=t.dataset.id;D.ui.stage=null;undoSt=[];save();render()};
 ACT.lessonInfo=()=>{const L=Lz();if(!L)return ACT.newLesson();
