@@ -206,8 +206,7 @@ const fmtD=s=>s?s.split('-').reverse().join('.'):'';
 const clone=o=>JSON.parse(JSON.stringify(o));
 const cmp=(a,b)=>a.localeCompare(b,['kk','ru']);
 
-const NEWTON=`Тақырып: Ньютонның бірінші заңы
-Оқу мақсатының коды:
+const NEWTON=`Оқу мақсатының коды:
 Оқу мақсаты:
 Сабақтың мақсаты: Қорытқы күш нөлге тең болғанда дененің тыныштық күйін немесе бірқалыпты түзу сызықты қозғалысын түсіндіру
 # Сабақтың басы
@@ -326,7 +325,7 @@ function parseTpl(txt){
   if(!T.stages.length)warn.push('Бірде-бір кезең жоқ. Кезең «# Атауы» жолынан басталады');
   return{T,warn};
 }
-function serTpl(T){const o=[`Тақырып: ${T.topic||''}`,`Оқу мақсатының коды: ${T.code||''}`,`Оқу мақсаты: ${T.objective||''}`,`Сабақтың мақсаты: ${T.goal||''}`];
+function serTpl(T){const o=[...(T.topic?[`Тақырып: ${T.topic}`]:[]),`Оқу мақсатының коды: ${T.code||''}`,`Оқу мақсаты: ${T.objective||''}`,`Сабақтың мақсаты: ${T.goal||''}`];
   const ml=(k,v)=>{if(v!==''&&v!=null)String(v).split('\n').forEach(x=>o.push(`${k}: ${x}`))};
   T.stages.forEach(s=>{o.push(s.short===s.name?`# ${s.name}`:`# ${s.short} | ${s.name}`);ml('Уақыты',s.time);ml('Педагогтің әрекеті',s.ped);ml('Оқушының әрекеті',s.stud);ml('Бағалау',s.ass);ml('Ресурстар',s.res);
     if(s.note)s.note.split('\n').forEach(n=>o.push('* '+n));
@@ -382,7 +381,8 @@ function makeLesson(cid,date,topic,src){let P;
 const C=()=>D.classes.find(c=>c.id===D.ui.cid);
 const Lz=()=>{const L=D.lessons.find(l=>l.id===D.ui.lid);return L&&L.cid===D.ui.cid?L:null};
 const curStage=L=>L&&(L.stages.find(s=>s.id===D.ui.stage)||L.stages.find(s=>sActMax(L,s)>0)||L.stages[0]);
-const curTask=(L,s)=>s&&(s.tasks.find(t=>t.id===D.ui.taskBy[s.id])||s.tasks.find(t=>tOn(L,s,t))||s.tasks[0]);
+/* only stages: all descriptors of a stage are shown together (tasks are kept in data but not shown) */
+const curTask=(L,s)=>s&&{id:s.id,name:stS(s),full:'',descs:s.tasks.filter(t=>!L.skip[t.id]).flatMap(t=>t.descs)};
 function fixUi(){D.ui.taskBy=D.ui.taskBy||{};if(!C())D.ui.cid=D.classes[0]&&D.classes[0].id;
   if(!Lz()){const ls=D.lessons.filter(l=>l.cid===D.ui.cid).sort((a,b)=>b.created-a.created);D.ui.lid=ls[0]&&ls[0].id}
   const L=Lz();if(L){const s=curStage(L);D.ui.stage=s&&s.id;const t=curTask(L,s);if(s&&t)D.ui.taskBy[s.id]=t.id}
@@ -415,13 +415,13 @@ function progress(L,t){const c=C(),pres=c.students.filter(p=>!L.absent[p.id]);
 function renderHome(c,L){const s=c&&L&&c.students.find(x=>x.id===D.ui.sid),st=L&&curStage(L),t=L&&curTask(L,st);
   const ls=c?D.lessons.filter(l=>l.cid===c.id).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created).slice(0,5):[];
   $('home').innerHTML=`<div class="hwrap"><h1>Басты</h1>
-   <section class="panel hc">${L?`<div class="mut sm">Ағымдағы сабақ</div><div class="hl"><b>${esc(c.name)}</b> · ${fmtD(L.date)} · ${esc(L.topic||'тақырыпсыз')}</div>
-     <button class="pri big" data-act="cont">Бағалауды жалғастыру<small>${s?esc(s.n)+' · ':''}${esc(stS(st))}${t?' · '+esc(t.name):''}</small></button>`
+   <section class="panel hc">${L?`<div class="mut sm">Ағымдағы сабақ</div><div class="hl"><b>${esc(c.name)}</b> · ${fmtD(L.date)}</div>
+     <button class="pri big" data-act="cont">Бағалауды жалғастыру<small>${s?esc(s.n)+' · ':''}${esc(stS(st))}</small></button>`
      :`<p class="mut" style="margin-top:0">${c?'Бұл сыныпта әзірге сабақ жоқ.':'Алдымен сынып құрыңыз.'}</p><button class="pri big" data-act="${c?'newLesson':'classes'}">${c?'Жаңа сабақ':'Сынып құру'}</button>`}
-     ${L?`<div class="hbtns"><button data-act="results">Нәтижелер</button><button data-act="kmzh">ҚМЖ</button><button data-act="lessonInfo">Тақырып, күні, уақыт</button></div>`:''}</section>
+     ${L?`<div class="hbtns"><button data-act="results">Нәтижелер</button><button data-act="kmzh">ҚМЖ</button><button data-act="lessonInfo">Күні мен уақыты</button></div>`:''}</section>
    <section class="panel hc"><h2>Сынып</h2><div class="chips">${D.classes.map(k=>`<button class="${k===c?'on':''}" data-act="pickC" data-id="${k.id}" aria-pressed="${k===c}">${esc(k.name)} <span class="mut sm">${k.students.length}</span></button>`).join('')}</div>
      <div class="hbtns"><button data-act="classes">Оқушылар тізімі · импорт</button></div></section>
-   ${c?`<section class="panel hc"><h2>Сабақ</h2><div class="mlist">${ls.map(l=>`<div class="mitem${l.id===D.ui.lid?' on':''}"><button data-act="pickL" data-id="${l.id}">${fmtD(l.date)} · ${esc(l.topic||'тақырыпсыз')} <span class="mut sm">· ${lMax(l)} балл</span></button></div>`).join('')||'<p class="mut">Сабақ жоқ.</p>'}</div>
+   ${c?`<section class="panel hc"><h2>Сабақ</h2><div class="mlist">${ls.map(l=>`<div class="mitem${l.id===D.ui.lid?' on':''}"><button data-act="pickL" data-id="${l.id}">${fmtD(l.date)} <span class="mut sm">· ${lMax(l)} балл</span></button></div>`).join('')||'<p class="mut">Сабақ жоқ.</p>'}</div>
      <div class="hbtns"><button data-act="newLesson">Жаңа сабақ</button><button data-act="history">Сабақтар тарихы</button></div></section>`:''}
    <section class="panel hc"><h2>Баптаулар</h2><div class="hbtns"><button data-act="templates">Шаблондар</button>${L?'<button data-act="editLesson">Осы сабақтың критерийлері</button>':''}<button data-act="backup">Резервтік көшірме</button></div></section></div>`}
 function renderTabs(L){const t=$('tabs'),cur=curStage(L);t.className='tabs'+(L.stages.length===4?' n4':'');
@@ -447,10 +447,9 @@ function renderCard(c,L){const el=$('cardcol');rowIds=[];
   let h=`<div class="panel card"><div class="chd"><h2>${pos}. ${esc(s.n)}</h2><div class="tot" aria-label="Сабақтың қорытындысы"><b>${abs||!r.n?'—':r.sum}</b><span> / ${r.max}</span></div></div>
    <div class="meta"><span class="chip s-${zero?'zero':r.st}">${zero?'Қорытынды 0 — тексеріңіз':ST_L[r.st]}</span>${sr.max?`<span class="mut sm">${esc(stS(cur))}: ${sr.n?sr.sum:'—'} / ${sr.max}</span>`:''}<span class="sp"></span>
    <button class="ib" data-act="undo" title="Соңғы әрекетті болдырмау" aria-label="Соңғы әрекетті болдырмау"${undoSt.length?'':' disabled'}>↶</button></div>`;
-  if(cur.tasks.length>1)h+=`<div class="tsel" role="tablist" aria-label="Тапсырма">${cur.tasks.map(x=>`<button class="${x===t?'on':''}" role="tab" aria-selected="${x===t}" data-task="${x.id}" title="${esc(x.full||x.name)}">${esc(x.name)}<small>${tOn(L,cur,x)?progress(L,x):L.skip[x.id]?'өткізілмеді':'баллсыз'}</small></button>`).join('')}</div>`;
-  else if(t)h+=`<div class="tone"><b>${esc(t.name)}</b>${scoredT?`<small>Тексерілді: ${progress(L,t)}</small>`:''}</div>`;
+  if(scoredT)h+=`<div class="tone"><small style="margin:0">${esc(stS(cur))} · Тексерілді: ${progress(L,t)}</small></div>`;
   if(abs)h+=`<div class="absn"><span>Келмеді деп белгіленген. Белгілер қорытындыға кірмейді.</span><button data-act="absent">Келді</button></div>`;
-  else if(t&&(L.skip[t.id]||L.skip[cur.id]))h+=`<div class="nob">Балл қойылмайды: тапсырма осы сабақта өткізілмеді</div><button data-act="skip">Тапсырманы қайтару</button>`;
+  else if(L.skip[cur.id])h+=`<div class="nob">Балл қойылмайды: кезең осы сабақта өткізілмеді</div><button data-act="skip">Кезеңді қайтару</button>`;
   else if(!scoredT)h+=`<div class="nob">Балл қойылмайды</div>`;
   else{const m=L.marks[s.id]||{};
     t.descs.forEach(d=>{const v=m[d.id];rowIds.push(d.id);const k=rowIds.length-1,op=openInfo.has(d.id);
@@ -463,13 +462,13 @@ function renderCard(c,L){const el=$('cardcol');rowIds=[];
   const snav=`<div class="snav only-m"><button data-act="toList">Оқушылар</button><button class="pri" data-act="next">Келесі →</button></div>`;
   const phr=abs||!t?[]:t.descs.flatMap(d=>d.fb),fb=L.fb[s.id]||'';
   const bd=L.stages.filter(x=>sActMax(L,x)>0).map(x=>{const q=sRes(L,s.id,x);return `${esc(stS(x))} ${q.n?q.sum:'—'}/${q.max}${q.n&&q.n<q.all?` (${q.n} / ${q.all})`:''}`}).join(' · ');
-  h+=`<details class="more" id="more"${openMore||fb?' open':''}><summary>Қосымша: кері байланыс, келмеді, тапсырма</summary><div class="mbody">
+  h+=`<details class="more" id="more"${openMore||fb?' open':''}><summary>Қосымша: кері байланыс, келмеді</summary><div class="mbody">
     ${t&&t.full?`<p class="note"><b>${esc(t.name)}:</b> ${esc(t.full)}</p>`:''}
     ${!scoredT&&(cur.ped||cur.stud)?`<p class="note">${cur.ped?`<b>Педагогтің әрекеті:</b> ${esc(cur.ped)}\n`:''}${cur.stud?`<b>Оқушының әрекеті:</b> ${esc(cur.stud)}`:''}</p>`:''}
     <div class="sm"><b>Кезеңдер бойынша:</b> ${bd||'—'}</div>
     ${phr.length?`<div class="phr">${phr.map((p,i)=>`<button data-ph="${i}">${esc(p)}</button>`).join('')}</div>`:''}
     <textarea id="fbT" rows="2" aria-label="Кері байланыс" placeholder="Кері байланыс (міндетті емес). Ауызша берсеңіз, бос қалдырыңыз">${esc(fb)}</textarea>
-    <div class="mact"><button data-act="absent">${abs?'Келді':'Келмеді'}</button>${scoredT?'<button data-act="nextU">Келесі тексерілмеген</button><button data-act="skip">Тапсырма өткізілмеді</button>':''}</div>
+    <div class="mact"><button data-act="absent">${abs?'Келді':'Келмеді'}</button>${scoredT?'<button data-act="nextU">Келесі тексерілмеген</button><button data-act="skip">Кезең өткізілмеді</button>':''}</div>
     <div class="keys">Пернелер: Tab / Enter · ↑↓ дескриптор · 0–9 деңгей · Del белгіні алу · → / N келесі · Shift+N тексерілмеген · ← алдыңғы · [ ] кезең · Ctrl+Z болдырмау · / іздеу</div>
   </div></details>${snav}</div>`;
   if(kRow>=rowIds.length)kRow=0;el.innerHTML=h;el._phr=phr;
@@ -498,9 +497,9 @@ function go(sid,reveal){D.ui.sid=sid;D.ui.view='card';kRow=0;save();render();if(
 function step(d){const o=order();if(!o.length)return;let i=o.findIndex(s=>s.id===D.ui.sid)+d;
   if(i>=o.length){i=0;toast('Тізім соңы, қайтадан бірінші оқушы')}if(i<0)i=o.length-1;go(o[i].id,true)}
 function nextUnchecked(){const L=Lz();if(!L)return;const s=curStage(L),t=curTask(L,s);
-  if(!t||!tOn(L,s,t))return toast('Бұл тапсырмада балл жоқ');const o=order(),i=o.findIndex(x=>x.id===D.ui.sid);
+  if(!t||!tOn(L,s,t))return toast('Бұл кезеңде балл жоқ');const o=order(),i=o.findIndex(x=>x.id===D.ui.sid);
   for(let k=1;k<=o.length;k++){const p=o[(i+k)%o.length];if(L.absent[p.id])continue;const r=tRes(L,p.id,t);if(r.n<r.all)return go(p.id,true)}
-  toast('Бұл тапсырма бойынша барлық оқушы тексерілді')}
+  toast('Бұл кезең бойынша барлық оқушы тексерілді')}
 function setStage(id){D.ui.stage=id;kRow=0;save();render()}
 function setTask(id){const L=Lz();D.ui.taskBy[curStage(L).id]=id;kRow=0;save();render()}
 function goHome(){D.ui.screen='home';save();render();scrollTo(0,0)}
@@ -518,7 +517,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest('button');i
   else if(a==='toList'){D.ui.view='list';save();render()}
   else if(a==='undo')undo();
   else if(a==='absent'){const sid=D.ui.sid;undoSt.push({lid:L.id,sid,abs:!!L.absent[sid]});if(L.absent[sid])delete L.absent[sid];else L.absent[sid]=true;save();render()}
-  else if(a==='skip'){const s=curStage(L),tk=curTask(L,s);if(L.skip[tk.id]||L.skip[s.id]){delete L.skip[tk.id];delete L.skip[s.id]}else{if(!await ask('Тапсырма өткізілмеді ме?',`«${tk.name}» осы сабақтың максимумына және барлық оқушының мәртебесіне кірмейді. Қойылған белгілер сақталады.`))return;L.skip[tk.id]=true}save();render()}
+  else if(a==='skip'){const s=curStage(L);if(L.skip[s.id])delete L.skip[s.id];else{if(!await ask('Кезең өткізілмеді ме?',`«${stS(s)}» осы сабақтың максимумына және барлық оқушының мәртебесіне кірмейді. Қойылған белгілер сақталады.`))return;L.skip[s.id]=true}save();render()}
   else if(ACT[a])ACT[a](t)});
 let fbTm=0;function saveFb(){const L=Lz(),v=$('fbT').value;if(v.trim())L.fb[D.ui.sid]=v;else delete L.fb[D.ui.sid];save()}
 document.addEventListener('input',e=>{if(e.target.id==='fbT'){clearTimeout(fbTm);fbTm=setTimeout(saveFb,400)}
@@ -549,21 +548,19 @@ ACT.pickC=t=>{D.ui.cid=t.dataset.id;D.ui.lid=null;D.ui.stage=null;undoSt=[];save
 ACT.pickL=t=>{D.ui.lid=t.dataset.id;D.ui.stage=null;undoSt=[];save();render()};
 ACT.lessonInfo=()=>{const L=Lz();if(!L)return ACT.newLesson();
   modal(`<h2>Сабақ туралы</h2><label class="fl">Күні<input type="date" id="liD" value="${L.date}"></label>
-   <label class="fl">Тақырыбы<input type="text" id="liT" value="${esc(L.topic)}"></label>
    <label class="fl">Оқу мақсатының коды<input type="text" id="liC" value="${esc(L.code)}"></label>
    <label class="fl">Оқу мақсаты<textarea id="liO" rows="2">${esc(L.objective)}</textarea></label>
    <label class="fl">Сабақтың мақсаты<textarea id="liG" rows="2">${esc(L.goal)}</textarea></label>
    <h3>Кезеңдердің уақыты, мин</h3><div class="mins">${L.stages.map(s=>`<label class="fl">${esc(s.short)}<input type="number" min="0" max="90" data-min="${s.id}" value="${esc(s.time)}"></label>`).join('')}</div>
    <div class="sum">Сабақтың максимумы: <b>${lMax(L)}</b> балл · уақыты: <b>${L.stages.reduce((a,s)=>a+(+s.time||0),0)}</b> мин</div>
    <div class="btns"><button data-act="editLesson">Жоспар мен критерийлер</button><button data-act="close">Бас тарту</button><button class="pri" data-act="liSave">Сақтау</button></div>`)};
-ACT.liSave=()=>{const L=Lz();L.date=$('liD').value||L.date;L.topic=$('liT').value.trim();L.code=$('liC').value.trim();L.objective=$('liO').value.trim();L.goal=$('liG').value.trim();
+ACT.liSave=()=>{const L=Lz();L.date=$('liD').value||L.date;L.code=$('liC').value.trim();L.objective=$('liO').value.trim();L.goal=$('liG').value.trim();
   document.querySelectorAll('[data-min]').forEach(i=>{const s=L.stages.find(x=>x.id===i.dataset.min);if(s)s.time=i.value===''?'':Math.max(0,+i.value)});save();closeModal();render();toast('Сақталды')};
 
 ACT.kmzh=()=>{const L=Lz(),c=C();if(!L)return toast('Алдымен сабақ құрыңыз');
   const ass=s=>[s.ass,...s.tasks.filter(t=>tMax(t)).map(t=>`${t.name}: ${t.descs.map(d=>`${d.t} (0–${dmax(d)})`).join('; ')} — ${tMax(t)} балл`)].filter(Boolean).join('\n');
-  modal(`<h2>ҚМЖ · ${esc(L.topic||'тақырыпсыз')}</h2><div class="tw"><table class="kmzh">
+  modal(`<h2>ҚМЖ · ${esc(c.name)} · ${fmtD(L.date)}</h2><div class="tw"><table class="kmzh">
    <tr><th>Сынып</th><td>${esc(c.name)}</td><th>Күні</th><td>${fmtD(L.date)}</td></tr>
-   <tr><th>Сабақтың тақырыбы</th><td colspan="3">${esc(L.topic)}</td></tr>
    <tr><th>Оқу мақсаты</th><td colspan="3">${L.code?`<b>${esc(L.code)}</b> `:''}${esc(L.objective)}</td></tr>
    <tr><th>Сабақтың мақсаты</th><td colspan="3">${esc(L.goal)}</td></tr></table></div>
    <h3>Сабақтың барысы</h3><div class="tw"><table class="kmzh"><tr><th>Сабақтың кезеңі / уақыт</th><th>Педагогтің әрекеті</th><th>Оқушының әрекеті</th><th>Бағалау</th><th>Ресурстар</th></tr>
@@ -574,26 +571,24 @@ ACT.kmzh=()=>{const L=Lz(),c=C();if(!L)return toast('Алдымен сабақ �
 ACT.newLesson=()=>{const c=C();if(!c)return ACT.classes();
   const prev=D.lessons.filter(l=>l.cid===c.id).sort((a,b)=>b.created-a.created);
   const opts=D.templates.map(t=>`<option value="t:${t.id}">Шаблон: ${esc(t.name)}</option>`).join('')+
-    prev.map(l=>`<option value="l:${l.id}">Сабақтың көшірмесі: ${fmtD(l.date)} · ${esc(l.topic||'тақырыпсыз')}</option>`).join('');
+    prev.map(l=>`<option value="l:${l.id}">Сабақтың көшірмесі: ${fmtD(l.date)}</option>`).join('');
   modal(`<h2>Жаңа сабақ · ${esc(c.name)}</h2>
    <label class="fl">Сабақтың негізі<select id="nlS">${opts}</select></label>
    <label class="fl">Күні<input type="date" id="nlD" value="${today()}"></label>
-   <label class="fl">Тақырыбы<input type="text" id="nlT" placeholder="Бос қалса, шаблоннан алынады"></label>
    <p class="mut sm">Жаңа сабақ — жеке жазба, бұрынғы сабақтар тарихта сақталады. Көшірме ҚМЖ құрылымы мен критерийлерді алады, оқушылардың белгілері бос басталады.</p>
    <div class="btns"><button data-act="close">Бас тарту</button><button class="pri" data-act="nlCreate">Сабақ құру</button></div>`);
-  const fill=()=>{const v=$('nlS').value;$('nlT').value=v[0]==='t'?parseTpl(D.templates.find(x=>x.id===v.slice(2)).txt).T.topic:D.lessons.find(x=>x.id===v.slice(2)).topic};
-  $('nlS').onchange=fill;fill()};
+};
 ACT.nlCreate=()=>{const v=$('nlS').value,src=v[0]==='t'?{tpl:v.slice(2)}:{lesson:v.slice(2)};
-  const L=makeLesson(D.ui.cid,$('nlD').value,$('nlT').value.trim(),src);D.ui.lid=L.id;D.ui.stage=null;undoSt=[];save();closeModal();render();toast('Сабақ құрылды')};
+  const L=makeLesson(D.ui.cid,$('nlD').value,'',src);D.ui.lid=L.id;D.ui.stage=null;undoSt=[];save();closeModal();render();toast('Сабақ құрылды')};
 
 ACT.history=()=>{const c=C();if(!c)return;const ls=D.lessons.filter(l=>l.cid===c.id).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
   const ar=D.archive.filter(a=>a.cid===c.id);
   modal(`<h2>Сабақтар тарихы · ${esc(c.name)}</h2><div class="mlist">${ls.map(l=>{const cnt={done:0,draft:0};c.students.forEach(s=>{const r=res(l,s.id);if(cnt[r.st]!=null)cnt[r.st]++});
-    return `<div class="mitem${l.id===D.ui.lid?' on':''}"><button data-act="openL" data-id="${l.id}">${fmtD(l.date)} · ${esc(l.topic||'тақырыпсыз')}<br><span class="mut sm">${l.stages.map(s=>esc(s.short)).join(' · ')} · тексерілді ${cnt.done}, жоба ${cnt.draft} · максимум ${lMax(l)}</span></button><button data-act="delL" data-id="${l.id}" aria-label="Сабақты өшіру">×</button></div>`}).join('')||'<p class="mut">Әзірге сабақ жоқ.</p>'}</div>
+    return `<div class="mitem${l.id===D.ui.lid?' on':''}"><button data-act="openL" data-id="${l.id}">${fmtD(l.date)}<br><span class="mut sm">${l.stages.map(s=>esc(stS(s))).join(' · ')} · тексерілді ${cnt.done}, жоба ${cnt.draft} · максимум ${lMax(l)}</span></button><button data-act="delL" data-id="${l.id}" aria-label="Сабақты өшіру">×</button></div>`}).join('')||'<p class="mut">Әзірге сабақ жоқ.</p>'}</div>
    ${ar.map(a=>`<h3>${esc(a.label)} · ${fmtD(a.date)}</h3><div class="tw"><table><tr><th>Аты-жөні</th>${a.stages.map(s=>`<th>${esc(s)}</th>`).join('')}<th>Қорытынды</th></tr>${a.rows.map(r=>`<tr><td>${esc(r.n)}</td>${r.per.map(p=>`<td>${p}</td>`).join('')}<td class="sc">${r.total}</td></tr>`).join('')}</table></div>`).join('')}
    <div class="btns"><button data-act="close">Жабу</button><button class="pri" data-act="newLesson">Жаңа сабақ</button></div>`)};
 ACT.openL=t=>{D.ui.lid=t.dataset.id;D.ui.stage=null;undoSt=[];save();closeModal();render()};
-ACT.delL=async t=>{const l=D.lessons.find(x=>x.id===t.dataset.id);if(!await ask('Сабақты өшіру керек пе?',`${fmtD(l.date)} · ${l.topic||'тақырыпсыз'}. Осы сабақтың барлық белгілері өшеді.`,'Өшіру'))return;
+ACT.delL=async t=>{const l=D.lessons.find(x=>x.id===t.dataset.id);if(!await ask('Сабақты өшіру керек пе?',`${fmtD(l.date)}. Осы сабақтың барлық белгілері өшеді.`,'Өшіру'))return;
   D.lessons=D.lessons.filter(x=>x!==l);save();render();ACT.history()};
 
 /* results */
@@ -601,7 +596,7 @@ ACT.results=()=>{const c=C(),L=Lz();if(!c||!L)return toast('Алдымен са�
   const rows=c.students.map((s,i)=>({i:i+1,s,r:res(L,s.id)}));const cnt={none:0,draft:0,done:0,abs:0};rows.forEach(x=>cnt[x.r.st]++);
   const zeros=rows.filter(x=>x.r.st==='done'&&x.r.sum===0).length;
   modal(`<h2>BilimClass үшін нәтижелер</h2>
-   <div class="sum">${esc(c.name)} · ${fmtD(L.date)} · ${esc(L.topic||'тақырыпсыз')} · максимум <b>${lMax(L)}</b><br>
+   <div class="sum">${esc(c.name)} · ${fmtD(L.date)} · максимум <b>${lMax(L)}</b><br>
    Тексерілді: <b>${cnt.done}</b> · жоба: <b>${cnt.draft}</b> · тексерілмеген: <b>${cnt.none}</b> · келмеді: <b>${cnt.abs}</b>
    ${zeros?`<br><span class="warn">${zeros} оқушының қорытындысы 0. Журналға жазбас бұрын тексеріңіз.</span>`:''}</div>
    <p class="mut sm">Рет — сыныптың бастапқы тізімі бойынша. Журналға жазылатын балл тек тексерілген оқушыларда бар. Жоба, тексерілмеген және келмеген оқушыларда бос. BilimClass-та аты-жөнін салыстырып шығыңыз.</p>
@@ -621,7 +616,7 @@ async function saveFile(name,data,mime){
   try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:mime}));a.download=name;document.body.appendChild(a);a.click();
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);toast('Файл «Жүктеулер» қалтасына сақталды');return true}catch(e){toast('Мұнда файлды сақтау мүмкін болмады');return false}}
 ACT.xls=()=>{if(!window.XLSX)return toast('Excel жүктелмеді: интернет керек');const c=C(),L=Lz(),st=L.stages.filter(s=>sActMax(L,s)>0);
-  const aoa=[['Сынып',c.name],['Күні',fmtD(L.date)],['Тақырыбы',L.topic],['Максимум',lMax(L)],[],
+  const aoa=[['Сынып',c.name],['Күні',fmtD(L.date)],['Максимум',lMax(L)],[],
     ['№','Аты-жөні','Мәртебе',...st.map(s=>`${s.short} (${sActMax(L,s)})`),'BilimClass үшін балл','Жиналған балл (жобаны қоса)','Кері байланыс']];
   c.students.forEach((s,i)=>{const r=res(L,s.id);aoa.push([i+1,s.n,ST_L[r.st],...st.map(x=>{const q=sRes(L,s.id,x);return q.n?q.sum:''}),transfer(r),r.n?r.sum:'',L.fb[s.id]||''])});
   const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:5},{wch:32},{wch:14},...st.map(()=>({wch:14})),{wch:12},{wch:14},{wch:40}];
@@ -701,7 +696,7 @@ ACT.lsSave=()=>{const L=Lz(),{T,warn}=parseTpl($('edT').value);if(!T.stages.leng
   L.stages.forEach(s=>{oldSt[s.short]=s.id;s.tasks.forEach(t=>{oldTk[s.short+'|'+t.name]=t.id;t.descs.forEach(d=>old[key(s,t,d)]=d.id)})});
   T.stages.forEach(s=>{if(oldSt[s.short])s.id=oldSt[s.short];s.tasks.forEach(t=>{const ot=oldTk[s.short+'|'+t.name];if(ot)t.id=ot;t.descs.forEach(d=>{const o=old[key(s,t,d)];if(o)d.id=o})})});
   L.stages=T.stages;L.topic=T.topic||L.topic;L.code=T.code;L.objective=T.objective;L.goal=T.goal;save();closeModal();render();toast('Сабақтың критерийлері жаңартылды')};
-ACT.lsToTpl=()=>{const n={id:uid(),name:(Lz().topic||'Сабақ')+' · шаблон',txt:$('edT').value};D.templates.push(n);save();toast('Шаблон сақталды');ACT.templates({dataset:{id:n.id}})};
+ACT.lsToTpl=()=>{const n={id:uid(),name:'Сабақ '+fmtD(Lz().date)+' · шаблон',txt:$('edT').value};D.templates.push(n);save();toast('Шаблон сақталды');ACT.templates({dataset:{id:n.id}})};
 
 /* backup */
 ACT.backup=()=>{let t=0;try{t=+localStorage.getItem('ocenka_bak')}catch(e){}
