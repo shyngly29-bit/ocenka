@@ -126,6 +126,7 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
   .cls{max-width:none;flex:1}
   .card{padding:10px 12px 12px}
 }
+@media (max-width:899px){.tabs.n4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:420px){#slist{gap:6px;padding:6px}.tile{padding:6px}.tile .tno{font-size:11px}.tile .tv{font-size:19px}.tab{padding:4px 4px}.tab b{font-size:13px}.tab small{font-size:11px}.tabs{gap:4px}.meta .chip{font-size:12px}
 .drow{grid-template-columns:minmax(0,1fr)}.lvs{justify-content:stretch}.lv{flex:1}.tab small{font-size:11px}}
 /* home */
@@ -206,13 +207,14 @@ const fmtD=s=>s?s.split('-').reverse().join('.'):'';
 const clone=o=>JSON.parse(JSON.stringify(o));
 const cmp=(a,b)=>a.localeCompare(b,['kk','ru']);
 
-const NEWTON=`# Сабақтың басы
+const NEWTON=`# Алдыңғы тақырыпты байланыстыру
 - Денеге әсер ететін екі күшті атайды
   0: Күштерді атамайды немесе қате атайды
   1: Екі күштің біреуін ғана дұрыс атайды (мысалы, тек ауырлық күшін)
   2: Ауырлық күшін де, тіректің реакция күшін де дұрыс атайды
   > Ауырлық күшін дұрыс атадың. Кітапты үстел де жоғары қарай итереді, бұл қандай күш?
-# Сабақтың ортасы
+# Жаңа тақырыпқа өту
+# Жаңа тақырыпты талқылау
 - Күштердің бағытын сызбада көрсетеді
   0: Екі күштің бағыты да қате немесе сызба жоқ
   1: Екі күштің біреуінің бағыты ғана дұрыс көрсетілген
@@ -223,7 +225,8 @@ const NEWTON=`# Сабақтың басы
   1: Күштердің шамасы тең екенін айтады, бірақ бағыттарын ескермейді
   2: Күштердің шамасы тең, бағыттары қарама-қарсы, сондықтан қорытқы күш нөлге тең деп негіздейді
   > Күштердің шамасы тең екенін дұрыс айттың. Енді олардың бағыттарын салыстыр.
-- Дененің қозғалысы қалай жалғасатынын анықтайды
+# Бекіту
+- Мұз бетімен 5 м/с жылдамдықпен сырғанаған шайбаның (қорытқы күш нөлге тең) қозғалысы қалай жалғасатынын анықтайды
   0: Анықтамайды немесе шайба тоқтайды деп қате айтады
   1: Шайба қозғала береді дейді, бірақ жылдамдығы тұрақты, жолы түзу екенін көрсетпейді
   2: Шайба 5 м/с жылдамдықпен бірқалыпты түзу сызықты қозғала береді деп дұрыс анықтайды
@@ -232,24 +235,23 @@ const NEWTON=`# Сабақтың басы
   0: Негіздеме жоқ
   1: Заңды атайды, бірақ мысалдағы күштермен байланыстырмайды
   2: Заңды тұжырымдап, шайбаға әсер ететін күштердің теңгерілгенімен байланыстырады
-  > Заңды дұрыс атадың. Енді оны шайбаға әсер ететін күштермен байланыстыр.
-# Сабақтың соңы`;
-const BLANK=`Тақырып:
-# Сабақтың басы
+  > Заңды дұрыс атадың. Енді оны шайбаға әсер ететін күштермен байланыстыр.`;
+const BLANK=`# Алдыңғы тақырыпты байланыстыру
 - Бақыланатын нәтиже (дескриптор)
   0: Орындамады немесе қате
   1: Жартылай: нақты не дұрыс
   2: Толық орындады
-# Сабақтың ортасы
+# Жаңа тақырыпқа өту
+# Жаңа тақырыпты талқылау
 - Бақыланатын нәтиже (дескриптор)
-  0:
-  1:
-  2:
+  0: 
+  1: 
+  2: 
+# Бекіту
 - Бақыланатын нәтиже (дескриптор)
-  0:
-  1:
-  2:
-# Сабақтың соңы`;
+  0: 
+  1: 
+  2: `;
 const DEMO_NAMES=['Әлібек Нұрсұлтан','Бекова Айгерім','Жұмабаев Нұрлан','Қасымова Дана','Серікұлы Әлихан','Төлегенова Мадина Ғалымқызы','Үсенов Ерасыл','Ыбырайым Іңкәр'];
 
 /* ---------- plan text format ---------- */
@@ -306,8 +308,8 @@ const transfer=r=>r.st==='done'?r.sum:'';
 
 /* ---------- storage ---------- */
 let D;
-const newTpls=()=>[{id:uid(),name:'9-сынып · Физика · Ньютонның бірінші заңы',txt:NEWTON,kmzh:1},{id:uid(),name:'Бос шаблон: 3 кезең',txt:BLANK,kmzh:1}];
-function blankDB(){return{v:3,kmzh:1,classes:[],lessons:[],templates:newTpls(),archive:[],ui:{sort:'list',view:'list',taskBy:{}}}}
+const newTpls=()=>[{id:uid(),name:'4 кезең · 9-сынып · Физика · Ньютонның бірінші заңы',txt:NEWTON,kmzh:1},{id:uid(),name:'Бос шаблон: 4 кезең',txt:BLANK,kmzh:1}];
+function blankDB(){return{v:3,kmzh:1,noKmzh:1,st4:1,classes:[],lessons:[],templates:newTpls(),archive:[],ui:{sort:'list',view:'list',taskBy:{}}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('Сақталмады: браузер жады қолжетімсіз')}}
 function migrateOld(src){
   if(!src||!src.desc)return false;const cls=src.classes||{'Менің сыныбым':src.students||[]};
@@ -324,8 +326,14 @@ function upgrade(){ // v3 (4 stages) → new 3-stage templates first; old lesson
   if(D.kmzh)return;D.kmzh=1;D.templates.forEach(t=>{if(!/ескі/.test(t.name))t.name+=' (ескі, 4 кезең)'});
   D.templates=[...newTpls(),...D.templates];D.lessons.forEach(L=>L.stages.forEach(s=>s.tasks.forEach(t=>{if(!t.name)t.name='Тапсырма';if(t.full==null)t.full=''})))}
 function noKmzh(){if(D.noKmzh)return;D.noKmzh=1;D.templates.forEach(t=>{t.name=t.name.replace(/^ҚМЖ · /,'').replace(/^бос шаблон \(5\/35\/5\)$/,'Бос шаблон: 3 кезең')})}
+function st4(){if(D.st4)return;D.st4=1;
+  D.templates.forEach(t=>{if(/#\s*Сабақтың басы/.test(t.txt)&&!/3 кезең/.test(t.name))t.name+=' (3 кезең)'});
+  D.templates=[...newTpls(),...D.templates];
+  D.lessons.forEach(L=>{const old3=L.stages.length===3&&L.stages.every(s=>/^Сабақтың/i.test(s.name));
+    const empty=!Object.values(L.marks||{}).some(m=>Object.keys(m).length)&&!Object.keys(L.absent||{}).length;
+    if(old3&&empty)L.stages=parseTpl(NEWTON).T.stages})}
 function load(){let raw=null;try{raw=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-  if(raw&&raw.v===3&&Array.isArray(raw.classes)){D=raw;D.ui=D.ui||{};D.ui.taskBy=D.ui.taskBy||{};D.archive=D.archive||[];if(!D.templates||!D.templates.length)D.templates=newTpls();upgrade();noKmzh();save();return}
+  if(raw&&raw.v===3&&Array.isArray(raw.classes)){D=raw;D.ui=D.ui||{};D.ui.taskBy=D.ui.taskBy||{};D.archive=D.archive||[];if(!D.templates||!D.templates.length)D.templates=newTpls();upgrade();noKmzh();st4();save();return}
   D=blankDB();let old=null;try{old=JSON.parse(localStorage.getItem('ocenka_v2'))||JSON.parse(localStorage.getItem('ocenka_v1'))}catch(e){}
   if(migrateOld(old)){D.ui.cid=D.classes[0].id;D.ui.migrated=1}else seedDemo();save()}
 
@@ -372,13 +380,13 @@ function progress(L,t){const c=C(),pres=c.students.filter(p=>!L.absent[p.id]);
 function renderHome(c,L){const s=c&&L&&c.students.find(x=>x.id===D.ui.sid),st=L&&curStage(L),t=L&&curTask(L,st);
   const ls=c?D.lessons.filter(l=>l.cid===c.id).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created).slice(0,5):[];
   $('home').innerHTML=`<div class="hwrap"><h1>Басты</h1>
-   <section class="panel hc">${L?`<div class="mut sm">Ағымдағы сабақ</div><div class="hl"><b>${esc(c.name)}</b> · ${fmtD(L.date)}</div>
+   <section class="panel hc">${L?`<div class="hl"><b>${esc(c.name)}</b> · ${fmtD(L.date)}</div>
      <button class="pri big" data-act="cont">Бағалауды жалғастыру<small>${s?esc(s.n)+' · ':''}${esc(stS(st))}</small></button>`
      :`<p class="mut" style="margin-top:0">${c?'Бұл сыныпта әзірге сабақ жоқ.':'Алдымен сынып құрыңыз.'}</p><button class="pri big" data-act="${c?'newLesson':'classes'}">${c?'Жаңа сабақ':'Сынып құру'}</button>`}
-     ${L?`<div class="hbtns"><button data-act="results">Нәтижелер</button><button data-act="lessonInfo">Сабақтың күні</button></div>`:''}</section>
+     ${L?`<div class="hbtns"><button data-act="results">Нәтижелер</button><button data-act="lessonInfo">Күні</button></div>`:''}</section>
    <section class="panel hc"><h2>Сынып</h2><div class="chips">${D.classes.map(k=>`<button class="${k===c?'on':''}" data-act="pickC" data-id="${k.id}" aria-pressed="${k===c}">${esc(k.name)} <span class="mut sm">${k.students.length}</span></button>`).join('')}</div>
      <div class="hbtns"><button data-act="classes">Оқушылар тізімі · импорт</button></div></section>
-   ${c?`<section class="panel hc"><h2>Сабақ</h2><div class="mlist">${ls.map(l=>`<div class="mitem${l.id===D.ui.lid?' on':''}"><button data-act="pickL" data-id="${l.id}">${fmtD(l.date)} <span class="mut sm">· ${lMax(l)} балл</span></button></div>`).join('')||'<p class="mut">Сабақ жоқ.</p>'}</div>
+   ${c?`<section class="panel hc"><h2>Күндер</h2><div class="mlist">${ls.map(l=>`<div class="mitem${l.id===D.ui.lid?' on':''}"><button data-act="pickL" data-id="${l.id}">${fmtD(l.date)} <span class="mut sm">· ${lMax(l)} балл</span></button></div>`).join('')||'<p class="mut">Сабақ жоқ.</p>'}</div>
      <div class="hbtns"><button data-act="newLesson">Жаңа сабақ</button><button data-act="history">Сабақтар тарихы</button></div></section>`:''}
    <section class="panel hc"><h2>Баптаулар</h2><div class="hbtns"><button data-act="templates">Шаблондар</button>${L?'<button data-act="editLesson">Осы сабақтың критерийлері</button>':''}<button data-act="backup">Резервтік көшірме</button></div></section></div>`}
 function renderTabs(L){const t=$('tabs'),cur=curStage(L);t.className='tabs'+(L.stages.length===4?' n4':'');
@@ -503,7 +511,7 @@ ACT.cont=()=>{D.ui.screen='work';D.ui.view=D.ui.sid?'card':'list';save();render(
 ACT.pickC=t=>{D.ui.cid=t.dataset.id;D.ui.lid=null;D.ui.stage=null;undoSt=[];save();render()};
 ACT.pickL=t=>{D.ui.lid=t.dataset.id;D.ui.stage=null;undoSt=[];save();render()};
 ACT.lessonInfo=()=>{const L=Lz();if(!L)return ACT.newLesson();
-  modal(`<h2>Сабақ</h2><label class="fl">Күні<input type="date" id="liD" value="${L.date}"></label>
+  modal(`<h2>Күні</h2><label class="fl">Күні<input type="date" id="liD" value="${L.date}"></label>
    <div class="sum">Кезеңдер: ${L.stages.map(s=>`${esc(stS(s))} ${sActMax(L,s)||'баллсыз'}`).join(' · ')} · максимум <b>${lMax(L)}</b> балл</div>
    <div class="btns"><button data-act="editLesson">Кезеңдер мен дескрипторлар</button><button data-act="close">Бас тарту</button><button class="pri" data-act="liSave">Сақтау</button></div>`)};
 ACT.liSave=()=>{const L=Lz();L.date=$('liD').value||L.date;save();closeModal();render();toast('Сақталды')};
@@ -605,10 +613,10 @@ ACT.pvSave=()=>{const c=C();c.students=pending;delete c.demo;pending=null;save()
 /* templates & plan editor */
 let edMode=null;
 const HELP=`<details class="sm" style="margin:6px 0"><summary>Қалай жазу керек</summary><div class="lvtxt">
-<div><b># Сабақтың басы</b> — кезең (жолдардың реті — кезеңдердің реті)</div>
+<div><b># Алдыңғы тақырыпты байланыстыру</b> — кезең (жолдардың реті — кезеңдердің реті)</div>
 <div><b>- Дескриптор</b> — бақыланатын нәтиже, астында деңгейлер: <b>0: …</b>, <b>1: …</b>, <b>2: …</b> (тек 0 және 1 де болады)</div>
 <div><b>&gt; фраза</b> — дескрипторға дайын кері байланыс (міндетті емес)</div>
-<div>Дескрипторы жоқ кезең баллсыз болады (мысалы, Сабақтың соңы).</div></div></details>`;
+<div>Дескрипторы жоқ кезең баллсыз болады (мысалы, Жаңа тақырыпқа өту).</div></div></details>`;
 function edSummary(){const {T,warn}=parseTpl($('edT').value);let tot=0;
   const lines=T.stages.map(s=>{const m=sMax(s);tot+=m;return `${esc(stS(s))}: ${m?`<b>${m}</b> балл · ${s.tasks.flatMap(t=>t.descs).length} дескриптор`:'баллсыз'}`});
   $('edS').innerHTML=`${lines.join('<br>')}<br>Сабаққа барлығы: <b>${tot}</b> балл${tot!==10?' <span class="warn">(ФО үшін әдетте 10)</span>':''}${warn.length?`<div class="warn" style="margin-top:6px">${warn.map(esc).join('<br>')}</div>`:''}`}
