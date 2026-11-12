@@ -5,7 +5,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <style>
 /* Layout: «Басты» home screen; work screen = sticky bar (⌂ Басты · class · 3 stages) + list | card on desktop, list ↔ card with fixed bottom bar on phone */
-:root{--bg:#eef1f5;--card:#fff;--tx:#16202c;--mut:#5b6878;--line:#d8dee6;--ac:#1f5fd1;--acs:#e7eefb;
+:root{--bg:#F5F7FB;--card:#FFFFFF;--tx:#172033;--mut:#475569;--line:#DCE4EE;--ac:#1D4ED8;--acs:#E8EEFD;
 --ok:#16733a;--oks:#e3f3e8;--warn:#8a5300;--warns:#fff2dc;--bad:#b42318;--bads:#fdecea;
 --f:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color-scheme:light;--toph:0px}
 *{box-sizing:border-box}
@@ -15,7 +15,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{background:var(--bg);color:var(--tx);font:15px/1.4 var(--f);-webkit-tap-highlight-color:transparent}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--card)}
 .g{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-button,label.btn{font:inherit;font-weight:600;color:var(--tx);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:44px;cursor:pointer;text-align:center}
+button,label.btn{font:inherit;font-weight:600;color:var(--tx);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 12px;min-height:44px;cursor:pointer;text-align:center}
 button:focus-visible,label.btn:focus-within,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 button:disabled{opacity:.4;cursor:default}
 .pri{background:var(--ac);border-color:var(--ac);color:#fff}
@@ -33,18 +33,19 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:4px 8px;min-height:46px;min-width:0}
 .tab b{overflow-wrap:normal;word-break:normal;hyphens:none;line-height:1.15;text-align:center}
 .tab small{font-weight:500;color:var(--mut);font-size:12px}
-.tab.on{background:var(--ac);border-color:var(--ac);color:#fff}.tab.on small{color:#dbe6fb}
+.tab.on{background:var(--acs);border-color:var(--ac);color:var(--ac);box-shadow:inset 0 0 0 1px var(--ac)}.tab.on small{color:var(--ac)}
+.tasks{flex-basis:100%;order:4;margin-top:0}
 /* main */
-.main{display:grid;grid-template-columns:380px minmax(0,1fr);gap:12px;padding-block:12px;align-items:start}
-#slist{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;padding:8px;align-content:start}
+.main{display:grid;grid-template-columns:minmax(380px,46%) minmax(0,1fr);gap:12px;padding-block:12px;align-items:start}
+#slist{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;padding:8px;align-content:start}
 #slist>.demo,#slist>.empty{grid-column:1/-1;margin:0}
 .tile{aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:space-between;align-items:stretch;text-align:left;padding:7px 8px;border-radius:14px;border:1.5px solid var(--line);min-height:0;min-width:0;font-weight:400;gap:2px}
 .tile .tno{font-size:12px;color:var(--mut);font-weight:600;font-variant-numeric:tabular-nums}
 .tile .tn{font-weight:600;font-size:clamp(12px,3.7vw,14px);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:normal;word-break:normal}
 .tile .tv{font-size:22px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;display:flex;justify-content:space-between;align-items:baseline;gap:4px}
 .tile .tv small{font-size:11px;font-weight:600;color:var(--mut)}
-.tile.has{background:#f5f8ff}
-.tile.part .tv b::after{content:'…';color:var(--mut)}
+.tile.s-done{background:#EEF8F1;border-color:#BFE1CA}.tile.s-draft{background:#FFF7E8;border-color:#EFD7A2}
+.tile .tv small{font-size:14px;color:var(--ok)}
 .tile.abs{background:var(--bg)}.tile.abs .tn{color:var(--mut)}.tile.abs .tv b{font-size:13px;color:var(--mut)}
 .tile.on{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}
 .snav{position:sticky;bottom:0;display:grid;grid-template-columns:1fr 1.6fr;gap:8px;background:var(--card);padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));margin-top:8px}
@@ -76,7 +77,7 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
 .tsel button{min-height:38px;padding:5px 12px;border-radius:99px;font-size:14px}
 .tsel button small{font-weight:500;color:var(--mut);margin-left:4px;font-variant-numeric:tabular-nums}
 .tsel button.on{border-color:var(--ac);background:var(--acs);color:var(--ac);box-shadow:inset 0 0 0 1px var(--ac)}
-.tone{margin-top:10px;font-size:14px}.tone small{color:var(--mut);margin-left:6px}
+.tone{margin-top:10px;font-size:15px}.tone small{color:var(--mut);margin-left:8px;font-size:13px}
 .drow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);margin-top:8px}
 .drow+.drow{margin-top:0}
 .drow.kf{box-shadow:-14px 0 0 -10px var(--ac)}
@@ -85,12 +86,12 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
 .dt .ds{display:block;font-size:12px;color:var(--mut);margin-top:2px}
 .dt .ds.set{color:var(--ok);font-weight:600}
 .ii{min-height:30px;min-width:30px;padding:0;border-radius:50%;font-size:13px;color:var(--ac);flex:none}
-.lvtxt{grid-column:1/-1;font-size:13px;background:var(--bg);border-radius:8px;padding:8px 10px}
+.lvtxt{font-size:13px;background:var(--bg);border-radius:8px;padding:8px 10px}
 .lvtxt div+div{margin-top:4px}
 .lvs{display:flex;gap:6px;align-items:center;justify-content:flex-end}
-.lv{min-width:56px;min-height:52px;font-size:20px;font-weight:700;border-width:1.5px;padding:0 10px}
+.lv{width:60px;min-height:52px;font-size:20px;font-weight:700;border-width:1.5px;padding:0;border-radius:12px}
 .lv.on{background:var(--ac);border-color:var(--ac);color:#fff;box-shadow:0 0 0 3px var(--acs)}
-.clr{min-width:40px;min-height:40px;padding:0;color:var(--mut);border-style:dashed}
+.clr{min-height:40px;padding:0 12px;color:var(--mut);font-size:14px}
 .nob{margin:12px 0 4px;padding:12px;background:var(--bg);border-radius:10px;font-weight:600;color:var(--mut)}
 .absn{margin-top:12px;padding:12px;background:var(--bg);border-radius:10px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .nextd{margin-top:12px;display:flex;gap:8px}
@@ -110,7 +111,7 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
   #slist{overflow:visible;grid-template-columns:repeat(3,minmax(0,1fr))}
   .v-list .cardcol{display:none}
   .cardcol{position:fixed;left:0;right:0;bottom:0;z-index:35;max-height:calc(100vh - var(--toph) - 6px);overflow:auto;overscroll-behavior:contain;
-    background:var(--card);border-radius:16px 16px 0 0;box-shadow:0 -6px 24px rgba(15,23,35,.18)}
+    background:var(--card);border-radius:16px 16px 0 0;border-top:1px solid var(--line);box-shadow:0 -2px 10px rgba(23,32,51,.08)}
   .cardcol>.panel{border:0;border-radius:16px 16px 0 0}
   .cardcol .card{padding:12px max(16px,env(safe-area-inset-left,0px)) 0}
   .cardcol .more{margin-top:8px}
@@ -164,7 +165,7 @@ td details summary{cursor:pointer;color:var(--ac);font-size:13px}
 .mins{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 ol.pv{margin:8px 0;padding-left:28px;max-height:40vh;overflow:auto}
 .lvtxt.hlp{grid-column:auto}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--tx);color:#fff;padding:10px 16px;border-radius:99px;z-index:70;font-weight:600;max-width:90vw;text-align:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--toph) + env(safe-area-inset-top,0px) + 10px);background:var(--tx);color:#fff;padding:10px 16px;border-radius:99px;z-index:70;font-weight:600;max-width:90vw;text-align:center}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -174,6 +175,7 @@ ol.pv{margin:8px 0;padding-left:28px;max-height:40vh;overflow:auto}
     <button id="bHome" aria-label="Басты мәзір">⌂ Басты</button>
     <span class="cls" id="clsName"></span>
     <div class="tabs" id="tabs" role="tablist" aria-label="Сабақ кезеңдері"></div>
+    <div class="tsel tasks" id="tasks" hidden></div>
   </div>
 </header>
 <main class="main g" id="main">
@@ -200,14 +202,25 @@ const fmtD=s=>s?s.split('-').reverse().join('.'):'';
 const clone=o=>JSON.parse(JSON.stringify(o));
 const cmp=(a,b)=>a.localeCompare(b,['kk','ru']);
 
-const NEWTON=`# Алдыңғы тақырыпты байланыстыру
+const NEWTON=`Тақырып: Ньютонның бірінші заңы
+Сабақтың мақсаты: Қорытқы күш нөлге тең болғанда дененің тыныштық күйін немесе бірқалыпты түзу сызықты қозғалысын түсіндіру
+# Қайталау | Алдыңғы тақырыпты байланыстыру
+Педагогтің әрекеті: Үстелде жатқан кітаптың суретін көрсетіп: «Кітапқа қандай күштер әсер етеді?» деп сұрайды.
+Оқушының әрекеті: Алдыңғы тақырыптағы күштерді атайды.
+Бағалау: Дескриптор бойынша 2 балл
 - Денеге әсер ететін екі күшті атайды
   0: Күштерді атамайды немесе қате атайды
   1: Екі күштің біреуін ғана дұрыс атайды (мысалы, тек ауырлық күшін)
   2: Ауырлық күшін де, тіректің реакция күшін де дұрыс атайды
   > Ауырлық күшін дұрыс атадың. Кітапты үстел де жоғары қарай итереді, бұл қандай күш?
-# Жаңа тақырыпқа өту
-# Жаңа тақырыпты талқылау
+# Жаңа тақырып | Жаңа тақырыпқа өту
+Педагогтің әрекеті: «Кітап неге қозғалмай тұр?» деген бағыттаушы сұрақ қояды, болжамдарды тыңдайды.
+Оқушының әрекеті: Болжам айтады.
+Бағалау: Баллсыз
+# Талқылау | Жаңа тақырыпты талқылау
+Педагогтің әрекеті: Ньютонның бірінші заңын түсіндіреді, күштердің сызбасын салуды көрсетеді.
+Оқушының әрекеті: Жұппен күштердің сызбасын салады, күштердің теңгерілуін талқылайды.
+Бағалау: Дескрипторлар бойынша 4 балл
 - Күштердің бағытын сызбада көрсетеді
   0: Екі күштің бағыты да қате немесе сызба жоқ
   1: Екі күштің біреуінің бағыты ғана дұрыс көрсетілген
@@ -218,8 +231,11 @@ const NEWTON=`# Алдыңғы тақырыпты байланыстыру
   1: Күштердің шамасы тең екенін айтады, бірақ бағыттарын ескермейді
   2: Күштердің шамасы тең, бағыттары қарама-қарсы, сондықтан қорытқы күш нөлге тең деп негіздейді
   > Күштердің шамасы тең екенін дұрыс айттың. Енді олардың бағыттарын салыстыр.
-# Бекіту
-- Мұз бетімен 5 м/с жылдамдықпен сырғанаған шайбаның (қорытқы күш нөлге тең) қозғалысы қалай жалғасатынын анықтайды
+# Бекіту | Бекіту
+Педагогтің әрекеті: Жаңа мысал береді: мұз бетімен 5 м/с жылдамдықпен сырғанаған шайба, қорытқы күш нөлге тең.
+Оқушының әрекеті: Мысалды өз бетінше шешеді.
+Бағалау: Дескрипторлар бойынша 4 балл
+- Шайбаның қозғалысы қалай жалғасатынын анықтайды
   0: Анықтамайды немесе шайба тоқтайды деп қате айтады
   1: Шайба қозғала береді дейді, бірақ жылдамдығы тұрақты, жолы түзу екенін көрсетпейді
   2: Шайба 5 м/с жылдамдықпен бірқалыпты түзу сызықты қозғала береді деп дұрыс анықтайды
@@ -229,22 +245,22 @@ const NEWTON=`# Алдыңғы тақырыпты байланыстыру
   1: Заңды атайды, бірақ мысалдағы күштермен байланыстырмайды
   2: Заңды тұжырымдап, шайбаға әсер ететін күштердің теңгерілгенімен байланыстырады
   > Заңды дұрыс атадың. Енді оны шайбаға әсер ететін күштермен байланыстыр.`;
-const BLANK=`# Алдыңғы тақырыпты байланыстыру
+const BLANK=`# Қайталау | Алдыңғы тақырыпты байланыстыру
 - Бақыланатын нәтиже (дескриптор)
   0: Орындамады немесе қате
   1: Жартылай: нақты не дұрыс
   2: Толық орындады
-# Жаңа тақырыпқа өту
-# Жаңа тақырыпты талқылау
+# Жаңа тақырып | Жаңа тақырыпқа өту
+# Талқылау | Жаңа тақырыпты талқылау
 - Бақыланатын нәтиже (дескриптор)
-  0: 
-  1: 
-  2: 
-# Бекіту
+  0:
+  1:
+  2:
+# Бекіту | Бекіту
 - Бақыланатын нәтиже (дескриптор)
-  0: 
-  1: 
-  2: `;
+  0:
+  1:
+  2:`;
 const DEMO_NAMES=['Әлібек Нұрсұлтан','Бекова Айгерім','Жұмабаев Нұрлан','Қасымова Дана','Серікұлы Әлихан','Төлегенова Мадина Ғалымқызы','Үсенов Ерасыл','Ыбырайым Іңкәр'];
 
 /* ---------- plan text format ---------- */
@@ -276,11 +292,11 @@ function parseTpl(txt){
   if(!T.stages.length)warn.push('Бірде-бір кезең жоқ. Кезең «# Атауы» жолынан басталады');
   return{T,warn};
 }
-function serTpl(T){const o=[];
-  const ml=(k,v)=>{if(v!==''&&v!=null)String(v).split('\n').forEach(x=>o.push(`${k}: ${x}`))};
-  T.stages.forEach(s=>{o.push(s.short===s.name?`# ${s.name}`:`# ${s.short} | ${s.name}`);
+function serTpl(T){const o=[];const ml=(k,v)=>{if(v!==''&&v!=null)String(v).split('\n').forEach(x=>o.push(`${k}: ${x}`))};
+  ml('Тақырып',T.topic);ml('Оқу мақсатының коды',T.code);ml('Оқу мақсаты',T.objective);ml('Сабақтың мақсаты',T.goal);
+  T.stages.forEach(s=>{o.push(s.short===s.name?`# ${s.name}`:`# ${s.short} | ${s.name}`);ml('Уақыты',s.time);ml('Педагогтің әрекеті',s.ped);ml('Оқушының әрекеті',s.stud);ml('Бағалау',s.ass);ml('Ресурстар',s.res);
     if(s.note)s.note.split('\n').forEach(n=>o.push('* '+n));
-    s.tasks.forEach(t=>{t.descs.forEach(d=>{o.push('- '+d.t);
+    s.tasks.forEach(t=>{if(s.tasks.length>1||(t.name&&t.name!=='Тапсырма'))o.push('## '+t.name+(t.full?' | '+t.full:''));t.descs.forEach(d=>{o.push('- '+d.t);
       d.levels.forEach(l=>o.push(`  ${l.v}: ${l.txt}`));d.fb.forEach(f=>o.push('  > '+f))})})});
   return o.join('\n')}
 
@@ -302,7 +318,7 @@ const transfer=r=>r.st==='done'?r.sum:'';
 /* ---------- storage ---------- */
 let D;
 const newTpls=()=>[{id:uid(),name:'4 кезең · физика мысалы',txt:NEWTON,kmzh:1},{id:uid(),name:'Бос шаблон: 4 кезең',txt:BLANK,kmzh:1}];
-function blankDB(){return{v:3,kmzh:1,noKmzh:1,st4:1,tn:1,classes:[],lessons:[],templates:newTpls(),archive:[],ui:{sort:'list',view:'list',taskBy:{}}}}
+function blankDB(){return{v:3,kmzh:1,noKmzh:1,st4:1,tn:1,v5:1,classes:[],lessons:[],templates:newTpls(),archive:[],ui:{sort:'list',view:'list',taskBy:{}}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('Сақталмады: браузер жады қолжетімсіз')}}
 function migrateOld(src){
   if(!src||!src.desc)return false;const cls=src.classes||{'Менің сыныбым':src.students||[]};
@@ -326,8 +342,9 @@ function st4(){if(D.st4)return;D.st4=1;
     const empty=!Object.values(L.marks||{}).some(m=>Object.keys(m).length)&&!Object.keys(L.absent||{}).length;
     if(old3&&empty)L.stages=parseTpl(NEWTON).T.stages})}
 function tplNames(){if(D.tn)return;D.tn=1;D.templates.forEach(t=>{if(t.name==='4 кезең · 9-сынып · Физика · Ньютонның бірінші заңы')t.name='4 кезең · физика мысалы'})}
+function v5(){if(D.v5)return;D.v5=1;D.templates.forEach(t=>{if(t.name==='4 кезең · физика мысалы'&&/^# Алдыңғы тақырыпты байланыстыру/.test(t.txt))t.txt=NEWTON;if(t.name==='Бос шаблон: 4 кезең'&&/^# Алдыңғы/.test(t.txt))t.txt=BLANK})}
 function load(){let raw=null;try{raw=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-  if(raw&&raw.v===3&&Array.isArray(raw.classes)){D=raw;D.ui=D.ui||{};D.ui.taskBy=D.ui.taskBy||{};D.archive=D.archive||[];if(!D.templates||!D.templates.length)D.templates=newTpls();upgrade();noKmzh();st4();tplNames();save();return}
+  if(raw&&raw.v===3&&Array.isArray(raw.classes)){D=raw;D.ui=D.ui||{};D.ui.taskBy=D.ui.taskBy||{};D.archive=D.archive||[];if(!D.templates||!D.templates.length)D.templates=newTpls();upgrade();noKmzh();st4();tplNames();v5();save();return}
   D=blankDB();let old=null;try{old=JSON.parse(localStorage.getItem('ocenka_v2'))||JSON.parse(localStorage.getItem('ocenka_v1'))}catch(e){}
   if(migrateOld(old)){D.ui.cid=D.classes[0].id;D.ui.migrated=1}else seedDemo();save()}
 
@@ -340,8 +357,7 @@ function makeLesson(cid,date,topic,src){let P;
 const C=()=>D.classes.find(c=>c.id===D.ui.cid);
 const Lz=()=>{const L=D.lessons.find(l=>l.id===D.ui.lid);return L&&L.cid===D.ui.cid?L:null};
 const curStage=L=>L&&(L.stages.find(s=>s.id===D.ui.stage)||L.stages.find(s=>sActMax(L,s)>0)||L.stages[0]);
-/* only stages: all descriptors of a stage are shown together (tasks are kept in data but not shown) */
-const curTask=(L,s)=>s&&{id:s.id,name:stS(s),full:'',descs:s.tasks.filter(t=>!L.skip[t.id]).flatMap(t=>t.descs)};
+const curTask=(L,s)=>s&&(s.tasks.find(t=>t.id===D.ui.taskBy[s.id])||s.tasks.find(t=>tOn(L,s,t))||s.tasks[0]);
 function fixUi(){D.ui.taskBy=D.ui.taskBy||{};if(!C())D.ui.cid=D.classes[0]&&D.classes[0].id;
   if(!Lz()){const ls=D.lessons.filter(l=>l.cid===D.ui.cid).sort((a,b)=>b.created-a.created);D.ui.lid=ls[0]&&ls[0].id}
   const L=Lz();if(L){const s=curStage(L);D.ui.stage=s&&s.id;const t=curTask(L,s);if(s&&t)D.ui.taskBy[s.id]=t.id}
@@ -351,7 +367,8 @@ function order(){const c=C();if(!c)return[];const a=c.students.slice();if(D.ui.s
 /* ---------- ui helpers ---------- */
 let undoSt=[],openInfo=new Set(),openMore=false,kRow=0,rowIds=[],q='',listScroll=0;
 const isM=()=>innerWidth<900;
-const stS=s=>s.name;
+const SHORT={'Алдыңғы тақырыпты байланыстыру':'Қайталау','Жаңа тақырыпқа өту':'Жаңа тақырып','Жаңа тақырыпты талқылау':'Талқылау','Бекіту':'Бекіту'};
+const stS=s=>s.short&&s.short!==s.name?s.short:(SHORT[s.name]||s.name);
 function toast(m){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2300)}
 function modal(html,wide){$('md').className='md'+(wide?' wide':'');$('md').innerHTML=html;$('ov').hidden=false;$('md').scrollTop=0}
 function closeModal(){$('ov').hidden=true}
@@ -371,63 +388,65 @@ function render(){fixUi();const c=C(),L=Lz();
   requestAnimationFrame(()=>document.documentElement.style.setProperty('--toph',$('top').offsetHeight+'px'))}
 function progress(L,t){const c=C(),pres=c.students.filter(p=>!L.absent[p.id]);
   return `${pres.filter(p=>{const r=tRes(L,p.id,t);return r.n===r.all}).length}/${pres.length}`}
+function shortCounts(c){const m={};c.students.forEach(s=>{const k=shortN(s.n);m[k]=(m[k]||0)+1});return m}
 function renderHome(c,L){const s=c&&L&&c.students.find(x=>x.id===D.ui.sid),st=L&&curStage(L),t=L&&curTask(L,st);
-  const ls=c?D.lessons.filter(l=>l.cid===c.id).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created).slice(0,5):[];
+  const lang=D.ui.lang||'kk';
   $('home').innerHTML=`<div class="hwrap"><h1>Басты</h1>
-   <section class="panel hc">${L?`<div class="hl"><b>${esc(c.name)}</b> · ${fmtD(L.date)}</div>
-     <button class="pri big" data-act="cont">Бағалауды жалғастыру<small>${s?esc(s.n)+' · ':''}${esc(stS(st))}</small></button>`
-     :`<p class="mut" style="margin-top:0">${c?'Бұл сыныпта әзірге сабақ жоқ.':'Алдымен сынып құрыңыз.'}</p><button class="pri big" data-act="${c?'newLesson':'classes'}">${c?'Жаңа сабақ':'Сынып құру'}</button>`}
-     ${L?`<div class="hbtns"><button data-act="results">Нәтижелер</button><button data-act="newLesson">Жаңа сабақ</button></div>`:''}</section>
+   <section class="panel hc">${L?`<div class="hl"><b>${esc(c.name)}</b> · ${fmtD(L.date)}${L.topic?` · ${esc(L.topic)}`:''}</div>
+     <button class="pri big" data-act="cont">Бағалауды жалғастыру<small>${s?esc(s.n)+' · ':''}${esc(stS(st))}${t&&st.tasks.length>1?' · '+esc(t.name):''}</small></button>
+     <div class="hbtns"><button data-act="newLesson">Жаңа сабақ</button><button data-act="lessonInfo">Тақырыбы мен күні</button><button data-act="kmzh">ҚМЖ</button><button data-act="history">Сабақтар тарихы</button></div>`
+     :`<p class="mut" style="margin-top:0">${c?'Бұл сыныпта әзірге сабақ жоқ.':'Алдымен сынып құрыңыз.'}</p><button class="pri big" data-act="${c?'newLesson':'classes'}">${c?'Жаңа сабақ':'Сынып құру'}</button>`}</section>
+   ${L?`<section class="panel hc"><h2>Сабақтың соңы</h2><p class="note">Қорытынды мен рефлексия: «Бүгін нені түсіндім? Қай тұста қиналдым?»</p>
+     <div class="hbtns"><button class="pri" data-act="results">Нәтижелер</button></div>
+     <p class="mut sm" style="margin:10px 0 0">ҚМЖ бойынша: «Қайталау» мен «Жаңа тақырып» — Сабақтың басы, «Талқылау» мен «Бекіту» — Сабақтың ортасы.</p></section>`:''}
    <section class="panel hc"><h2>Сынып</h2><div class="chips">${D.classes.map(k=>`<button class="${k===c?'on':''}" data-act="pickC" data-id="${k.id}" aria-pressed="${k===c}">${esc(k.name)} <span class="mut sm">${k.students.length}</span></button>`).join('')}</div>
      <div class="hbtns"><button data-act="classes">Оқушылар тізімі · импорт</button></div></section>
    <section class="panel hc"><h2>Баптаулар</h2><div class="hbtns"><button data-act="templates">Шаблондар</button><button data-act="backup">Резервтік көшірме</button></div>
-     <div class="chips langs" style="margin-top:10px;align-items:center"><span class="mut sm">Тіл · Язык · Language</span>${[['kk','Қазақша'],['ru','Русский'],['en','English']].map(([k,n])=>`<button class="${(D.ui.lang||'kk')===k?'on':''}" data-act="lang" data-l="${k}" aria-pressed="${(D.ui.lang||'kk')===k}">${n}</button>`).join('')}</div></section></div>`}
+     <div class="chips langs" style="margin-top:10px;align-items:center"><span class="mut sm">Тіл · Язык · Language</span>${[['kk','Қазақша'],['ru','Русский'],['en','English']].map(([k,n])=>`<button class="${lang===k?'on':''}" data-act="lang" data-l="${k}" aria-pressed="${lang===k}">${n}</button>`).join('')}</div></section></div>`}
 function renderTabs(L){const t=$('tabs'),cur=curStage(L);t.className='tabs'+(L.stages.length===4?' n4':'');
   t.innerHTML=L.stages.map(s=>{const m=sActMax(L,s);
-    return `<button class="tab${s===cur?' on':''}" role="tab" data-stage="${s.id}" aria-selected="${s===cur}" title="${esc(s.name)}${s.time?' · '+s.time+' мин':''}"><b>${esc(stS(s))}</b><small>${L.skip[s.id]?'өткізілмеді':m?m+' балл':'баллсыз'}</small></button>`}).join('')}
+    return `<button class="tab${s===cur?' on':''}" role="tab" data-stage="${s.id}" aria-selected="${s===cur}" title="${esc(s.name)}"><b>${esc(stS(s))}</b><small>${L.skip[s.id]?'өткізілмеді':m?m+' балл':'баллсыз'}</small></button>`}).join('');
+  const tk=$('tasks'),ct=curTask(L,cur);
+  tk.innerHTML=cur.tasks.length>1?cur.tasks.map(x=>`<button class="${x===ct?'on':''}" data-task="${x.id}" aria-pressed="${x===ct}" title="${esc(x.full||x.name)}">${esc(x.name)}<small>${tOn(L,cur,x)?progress(L,x):L.skip[x.id]?'өткізілмеді':'баллсыз'}</small></button>`).join(''):'';
+  tk.hidden=cur.tasks.length<2}
 function renderList(c,L){const el=$('slist'),keep=el.scrollTop;
   if(!c.students.length){el.innerHTML='<div class="empty">Сыныпта оқушы жоқ.<br><button class="link" data-act="classes">Тізім қосу</button></div>';return}
-  const pos={};c.students.forEach((s,i)=>pos[s.id]=i+1);const s0=curStage(L),t0=curTask(L,s0),qq=q.trim().toLowerCase();
+  const pos={};c.students.forEach((s,i)=>pos[s.id]=i+1);const s0=curStage(L),t0=curTask(L,s0),qq=q.trim().toLowerCase(),dup=shortCounts(c);
   el.innerHTML=(c.demo?'<div class="demo">Ойдан шығарылған оқушылармен мысал. Өз сыныбыңыз: ⌂ Басты → Оқушылар тізімі.</div>':'')+
    order().filter(s=>!qq||s.n.toLowerCase().includes(qq)).map(s=>{
-    const r=res(L,s.id),on=s.id===D.ui.sid,sc=t0&&tOn(L,s0,t0);let cls='tile',big,small;
-    if(r.st==='abs'){cls+=' abs';big='Келмеді';small=''}
-    else if(sc){const tr=tRes(L,s.id,t0);big=tr.n?String(tr.sum):'—';if(tr.n)cls+=' has';if(tr.n&&tr.n<tr.all)cls+=' part';small=r.n?`Σ ${r.sum}`:''}
-    else{big=r.n?String(r.sum):'—';small=r.n?'Σ':''}
-    return `<button class="${cls}${on?' on':''}" data-sid="${s.id}" aria-current="${on}" title="${esc(s.n)}" aria-label="${pos[s.id]}. ${esc(s.n)}: ${big==='—'?'белгіленбеген':big}"><span class="tno">№ ${pos[s.id]}</span><span class="tn">${esc(shortN(s.n))}</span><span class="tv"><b>${big}</b><small>${small}</small></span></button>`}).join('')
+    const r=res(L,s.id),on=s.id===D.ui.sid,sh=shortN(s.n);let cls='tile s-'+r.st,big,mark='';
+    if(r.st==='abs')big='Келмеді';else{big=r.n?String(r.sum):'—';if(t0&&tOn(L,s0,t0)){const tr=tRes(L,s.id,t0);mark=tr.n===tr.all?'✓':tr.n?'…':''}}
+    return `<button class="${cls}${on?' on':''}" data-sid="${s.id}" aria-current="${on}" title="${esc(s.n)}" aria-label="${esc(s.n)}: ${big==='—'?'белгіленбеген':big}">${dup[sh]>1?`<span class="tno">№ ${pos[s.id]}</span>`:''}<span class="tn">${esc(sh)}</span><span class="tv"><b>${big}</b><small>${mark}</small></span></button>`}).join('')
    ||'<div class="empty">Ешкім табылмады</div>';
   el.scrollTop=keep}
 function renderCard(c,L){const el=$('cardcol');rowIds=[];
   const s=c.students.find(x=>x.id===D.ui.sid);
   if(!s){el.innerHTML='<div class="panel empty">Тізімнен оқушыны таңдаңыз</div>';return}
-  const r=res(L,s.id),cur=curStage(L),t=curTask(L,cur),abs=!!L.absent[s.id],pos=c.students.indexOf(s)+1,sr=sRes(L,s.id,cur);
-  const zero=r.st==='done'&&r.sum===0,scoredT=t&&tOn(L,cur,t);
-  let h=`<div class="panel card"><div class="chd"><h2>${pos}. ${esc(s.n)}</h2><div class="tot" aria-label="Сабақтың қорытындысы"><b>${abs||!r.n?'—':r.sum}</b><span> / ${r.max}</span></div></div>
+  const r=res(L,s.id),cur=curStage(L),t=curTask(L,cur),abs=!!L.absent[s.id],sr=sRes(L,s.id,cur);
+  const zero=r.st==='done'&&r.sum===0,scoredT=t&&tOn(L,cur,t),m=L.marks[s.id]||{};
+  let h=`<div class="panel card"><div class="chd"><h2>${esc(s.n)}</h2><div class="tot" aria-label="Сабақтың қорытындысы"><b>${abs||!r.n?'—':r.sum}</b><span> / ${r.max}</span></div></div>
    <div class="meta"><span class="chip s-${zero?'zero':r.st}">${zero?'Қорытынды 0 — тексеріңіз':ST_L[r.st]}</span>${sr.max?`<span class="mut sm">Кезең: ${sr.n?sr.sum:'—'} / ${sr.max}</span>`:''}<span class="sp"></span>
-   <button class="ib" data-act="undo" title="Соңғы әрекетті болдырмау" aria-label="Соңғы әрекетті болдырмау"${undoSt.length?'':' disabled'}>↶</button></div>`;
-  if(scoredT)h+=`<div class="tone"><small style="margin:0">${esc(stS(cur))} · Тексерілді: ${progress(L,t)}</small></div>`;
+   <button class="ib" data-act="undo" title="Соңғы әрекетті болдырмау" aria-label="Соңғы әрекетті болдырмау"${undoSt.length?'':' disabled'}>↶</button></div>
+   <div class="tone"><b>${esc(stS(cur))}${t&&cur.tasks.length>1?' · '+esc(t.name):''}</b>${scoredT?`<small>Тексерілді: ${progress(L,t)}</small>`:''}</div>`;
   if(abs)h+=`<div class="absn"><span>Келмеді деп белгіленген. Белгілер қорытындыға кірмейді.</span><button data-act="absent">Келді</button></div>`;
-  else if(L.skip[cur.id])h+=`<div class="nob">Балл қойылмайды: кезең осы сабақта өткізілмеді</div><button data-act="skip">Кезеңді қайтару</button>`;
+  else if(t&&(L.skip[t.id]||L.skip[cur.id]))h+=`<div class="nob">Балл қойылмайды: тапсырма өткізілмеді</div><button data-act="skip">Тапсырманы қайтару</button>`;
   else if(!scoredT)h+=`<div class="nob">Балл қойылмайды</div>`;
-  else{const m=L.marks[s.id]||{};
-    t.descs.forEach(d=>{const v=m[d.id];rowIds.push(d.id);const k=rowIds.length-1,op=openInfo.has(d.id);
-      h+=`<div class="drow${k===kRow?' kf':''}"><div class="dt"><span><span class="dtx">${esc(d.t)}</span><span class="ds${v!=null?' set':''}">${v!=null?`Белгіленді: ${v}`:'Белгіленбеген'}</span></span>
-        <button class="ii" data-info="${d.id}" aria-expanded="${op}" aria-label="Деңгейлердің сипаттамасы" title="Деңгейлер">i</button></div>
-        <div class="lvs" role="group" aria-label="Деңгей">${d.levels.map(l=>`<button class="lv${v===l.v?' on':''}" data-lv="${d.id}" data-v="${l.v}" aria-pressed="${v===l.v}" title="${esc(l.txt)}">${l.v}</button>`).join('')}
-        <button class="clr" data-clr="${d.id}" title="Белгіні алу" aria-label="Белгіні алу"${v==null?' disabled':''}>×</button></div>
-        ${op?`<div class="lvtxt">${d.levels.map(l=>`<div><b>${l.v}</b> — ${esc(l.txt||'—')}</div>`).join('')}</div>`:''}</div>`})}
+  else t.descs.forEach(d=>{const v=m[d.id];rowIds.push(d.id);const k=rowIds.length-1;
+    h+=`<div class="drow${k===kRow?' kf':''}"><div class="dt"><span><span class="dtx">${esc(d.t)}</span><span class="ds${v!=null?' set':''}">${v!=null?`Белгіленді: ${v}`:'Белгіленбеген'}</span></span></div>
+      <div class="lvs" role="group" aria-label="Деңгей">${d.levels.map(l=>`<button class="lv${v===l.v?' on':''}" data-lv="${d.id}" data-v="${l.v}" aria-pressed="${v===l.v}">${l.v}</button>`).join('')}</div></div>`});
   h+=`<div class="nextd only-d"><button class="pri" data-act="next">Келесі →</button></div>`;
-  const snav=`<div class="snav only-m"><button data-act="toList">Оқушылар</button><button class="pri" data-act="next">Келесі →</button></div>`;
   const phr=abs||!t?[]:t.descs.flatMap(d=>d.fb),fb=L.fb[s.id]||'';
   const bd=L.stages.filter(x=>sActMax(L,x)>0).map(x=>{const q=sRes(L,s.id,x);return `${esc(stS(x))} ${q.n?q.sum:'—'}/${q.max}${q.n&&q.n<q.all?` (${q.n} / ${q.all})`:''}`}).join(' · ');
-  h+=`<details class="more" id="more"${openMore||fb?' open':''}><summary>Қосымша: кері байланыс, келмеді</summary><div class="mbody">
-    ${t&&t.full?`<p class="note"><b>${esc(t.name)}:</b> ${esc(t.full)}</p>`:''}
+  const lvInfo=scoredT&&!abs?t.descs.map(d=>`<div class="lvtxt"><div class="dtx"><b>${esc(d.t)}</b></div>${d.levels.map(l=>`<div class="dtx"><b>${l.v}</b> — ${esc(l.txt||'—')}</div>`).join('')}
+      <div style="margin-top:6px"><button class="clr" data-clr="${d.id}"${m[d.id]==null?' disabled':''}>× Белгіні алу</button></div></div>`).join(''):'';
+  h+=`<details class="more" id="more"${openMore?' open':''}><summary>Қосымша</summary><div class="mbody">
+    ${t&&t.full?`<p class="note dtx">${esc(t.full)}</p>`:''}${lvInfo}
     <div class="sm"><b>Кезеңдер бойынша:</b> ${bd||'—'}</div>
     ${phr.length?`<div class="phr">${phr.map((p,i)=>`<button data-ph="${i}">${esc(p)}</button>`).join('')}</div>`:''}
     <textarea id="fbT" rows="2" aria-label="Кері байланыс" placeholder="Кері байланыс (міндетті емес). Ауызша берсеңіз, бос қалдырыңыз">${esc(fb)}</textarea>
-    <div class="mact"><button data-act="absent">${abs?'Келді':'Келмеді'}</button>${scoredT?'<button data-act="nextU">Келесі тексерілмеген</button><button data-act="skip">Кезең өткізілмеді</button>':''}</div>
+    <div class="mact"><button data-act="absent">${abs?'Келді':'Келмеді'}</button>${scoredT?'<button data-act="nextU">Келесі тексерілмеген</button><button data-act="skip">Тапсырма өткізілмеді</button>':''}</div>
     <div class="keys">Пернелер: Tab / Enter · ↑↓ дескриптор · 0–9 деңгей · Del белгіні алу · → / N келесі · Shift+N тексерілмеген · ← алдыңғы · [ ] кезең · Ctrl+Z болдырмау · / іздеу</div>
-  </div></details>${snav}</div>`;
+  </div></details><div class="snav only-m"><button data-act="toList">Оқушылар</button><button class="pri" data-act="next">Келесі →</button></div></div>`;
   if(kRow>=rowIds.length)kRow=0;el.innerHTML=h;el._phr=phr;
   $('more').addEventListener('toggle',e=>openMore=e.target.open)}
 
@@ -454,9 +473,9 @@ function go(sid,reveal){D.ui.sid=sid;D.ui.view='card';kRow=0;save();render();if(
 function step(d){const o=order();if(!o.length)return;let i=o.findIndex(s=>s.id===D.ui.sid)+d;
   if(i>=o.length){i=0;toast('Тізім соңы, қайтадан бірінші оқушы')}if(i<0)i=o.length-1;go(o[i].id,true)}
 function nextUnchecked(){const L=Lz();if(!L)return;const s=curStage(L),t=curTask(L,s);
-  if(!t||!tOn(L,s,t))return toast('Бұл кезеңде балл жоқ');const o=order(),i=o.findIndex(x=>x.id===D.ui.sid);
+  if(!t||!tOn(L,s,t))return toast('Бұл тапсырмада балл жоқ');const o=order(),i=o.findIndex(x=>x.id===D.ui.sid);
   for(let k=1;k<=o.length;k++){const p=o[(i+k)%o.length];if(L.absent[p.id])continue;const r=tRes(L,p.id,t);if(r.n<r.all)return go(p.id,true)}
-  toast('Бұл кезең бойынша барлық оқушы тексерілді')}
+  toast('Бұл тапсырма бойынша барлық оқушы тексерілді')}
 function setStage(id){D.ui.stage=id;kRow=0;save();render()}
 function setTask(id){const L=Lz();D.ui.taskBy[curStage(L).id]=id;kRow=0;save();render()}
 function goHome(){D.ui.screen='home';save();render();scrollTo(0,0)}
@@ -474,7 +493,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest('button');i
   else if(a==='toList'){D.ui.view='list';save();render()}
   else if(a==='undo')undo();
   else if(a==='absent'){const sid=D.ui.sid;undoSt.push({lid:L.id,sid,abs:!!L.absent[sid]});if(L.absent[sid])delete L.absent[sid];else L.absent[sid]=true;save();render()}
-  else if(a==='skip'){const s=curStage(L);if(L.skip[s.id])delete L.skip[s.id];else{if(!await ask('Кезең өткізілмеді ме?',`«${stS(s)}» осы сабақтың максимумына және барлық оқушының мәртебесіне кірмейді. Қойылған белгілер сақталады.`))return;L.skip[s.id]=true}save();render()}
+  else if(a==='skip'){const s=curStage(L),tk=curTask(L,s);if(L.skip[tk.id]||L.skip[s.id]){delete L.skip[tk.id];delete L.skip[s.id]}else{if(!await ask('Тапсырма өткізілмеді ме?',`«${stS(s)}${s.tasks.length>1?' · '+tk.name:''}» осы сабақтың максимумына және барлық оқушының мәртебесіне кірмейді. Қойылған белгілер сақталады.`))return;L.skip[tk.id]=true}save();render()}
   else if(ACT[a])ACT[a](t)});
 let fbTm=0;function saveFb(){const L=Lz(),v=$('fbT').value;if(v.trim())L.fb[D.ui.sid]=v;else delete L.fb[D.ui.sid];save()}
 document.addEventListener('input',e=>{if(e.target.id==='fbT'){clearTimeout(fbTm);fbTm=setTimeout(saveFb,400)}
@@ -504,12 +523,31 @@ ACT.cont=()=>{D.ui.screen='work';D.ui.view=D.ui.sid?'card':'list';save();render(
 ACT.pickC=t=>{D.ui.cid=t.dataset.id;D.ui.lid=null;D.ui.stage=null;undoSt=[];save();render()};
 ACT.pickL=t=>{D.ui.lid=t.dataset.id;D.ui.stage=null;undoSt=[];save();render()};
 ACT.lessonInfo=()=>{const L=Lz();if(!L)return ACT.newLesson();
-  modal(`<h2>Күні</h2><label class="fl">Күні<input type="date" id="liD" value="${L.date}"></label>
-   <div class="sum">Кезеңдер: ${L.stages.map(s=>`${esc(stS(s))} ${sActMax(L,s)||'баллсыз'}`).join(' · ')} · максимум <b>${lMax(L)}</b> балл</div>
-   <div class="btns"><button data-act="editLesson">Кезеңдер мен дескрипторлар</button><button data-act="close">Бас тарту</button><button class="pri" data-act="liSave">Сақтау</button></div>`)};
-ACT.liSave=()=>{const L=Lz();L.date=$('liD').value||L.date;save();closeModal();render();toast('Сақталды')};
+  modal(`<h2>Сабақ туралы</h2><label class="fl">Күні<input type="date" id="liD" value="${L.date}"></label>
+   <label class="fl">Тақырыбы<input type="text" id="liT" value="${esc(L.topic)}"></label>
+   <label class="fl">Оқу мақсатының коды<input type="text" id="liC" value="${esc(L.code)}"></label>
+   <label class="fl">Оқу мақсаты<textarea id="liO" rows="2">${esc(L.objective)}</textarea></label>
+   <label class="fl">Сабақтың мақсаты<textarea id="liG" rows="2">${esc(L.goal)}</textarea></label>
+   <h3>Кезеңдердің уақыты, мин</h3><div class="mins">${L.stages.map(s=>`<label class="fl">${esc(s.short)}<input type="number" min="0" max="90" data-min="${s.id}" value="${esc(s.time)}"></label>`).join('')}</div>
+   <div class="sum">Сабақтың максимумы: <b>${lMax(L)}</b> балл · уақыты: <b>${L.stages.reduce((a,s)=>a+(+s.time||0),0)}</b> мин</div>
+   <div class="btns"><button data-act="editLesson">Жоспар мен критерийлер</button><button data-act="close">Бас тарту</button><button class="pri" data-act="liSave">Сақтау</button></div>`)};
+ACT.liSave=()=>{const L=Lz();L.date=$('liD').value||L.date;L.topic=$('liT').value.trim();L.code=$('liC').value.trim();L.objective=$('liO').value.trim();L.goal=$('liG').value.trim();
+  document.querySelectorAll('[data-min]').forEach(i=>{const s=L.stages.find(x=>x.id===i.dataset.min);if(s)s.time=i.value===''?'':Math.max(0,+i.value)});save();closeModal();render();toast('Сақталды')};
 
-const ST4=['Алдыңғы тақырыпты байланыстыру','Жаңа тақырыпқа өту','Жаңа тақырыпты талқылау','Бекіту'],ST4P=[2,0,4,4];
+ACT.kmzh=()=>{const L=Lz(),c=C();if(!L)return toast('Алдымен сабақ құрыңыз');
+  const ass=s=>[s.ass,...s.tasks.filter(t=>tMax(t)).map(t=>`${t.name}: ${t.descs.map(d=>`${d.t} (0–${dmax(d)})`).join('; ')} — ${tMax(t)} балл`)].filter(Boolean).join('\n');
+  modal(`<h2>ҚМЖ · ${esc(L.topic||'тақырыпсыз')}</h2><div class="tw"><table class="kmzh">
+   <tr><th>Сынып</th><td>${esc(c.name)}</td><th>Күні</th><td>${fmtD(L.date)}</td></tr>
+   <tr><th>Сабақтың тақырыбы</th><td colspan="3">${esc(L.topic)}</td></tr>
+   <tr><th>Оқу мақсаты</th><td colspan="3">${L.code?`<b>${esc(L.code)}</b> `:''}${esc(L.objective)}</td></tr>
+   <tr><th>Сабақтың мақсаты</th><td colspan="3">${esc(L.goal)}</td></tr></table></div>
+   <h3>Сабақтың барысы</h3><div class="tw"><table class="kmzh"><tr><th>Сабақтың кезеңі / уақыт</th><th>Педагогтің әрекеті</th><th>Оқушының әрекеті</th><th>Бағалау</th><th>Ресурстар</th></tr>
+   ${L.stages.map(s=>`<tr><td><b>${esc(s.name)}</b>${s.time?`\n${s.time} мин`:''}</td><td>${esc(s.ped)}${s.tasks.map(t=>t.full?`\n• ${esc(t.name)}: ${esc(t.full)}`:'').join('')}</td><td>${esc(s.stud)}</td><td>${esc(ass(s))}</td><td>${esc(s.res)}</td></tr>`).join('')}</table></div>
+   <div class="sum">Барлығы: <b>${lMax(L)}</b> балл</div>
+   <div class="btns"><button data-act="editLesson">Өңдеу</button><button class="pri" data-act="close">Жабу</button></div>`,true)};
+
+
+const ST4=['Қайталау | Алдыңғы тақырыпты байланыстыру','Жаңа тақырып | Жаңа тақырыпқа өту','Талқылау | Жаңа тақырыпты талқылау','Бекіту'],ST4P=[2,0,4,4];
 function blankTxt(pts){let k=0;return ST4.map((n,i)=>{const p=Math.max(0,Math.min(20,Math.round(+pts[i]||0)));let o=['# '+n],r=p;
   while(r>0){k++;const top=r>=2?2:1;r-=top;o.push(`- ${k}-дескриптор`,...Array.from({length:top+1},(_,v)=>`  ${v}: `))}return o.join('\n')}).join('\n')}
 ACT.newLesson=()=>{const c=C();if(!c)return ACT.classes();
@@ -519,7 +557,7 @@ ACT.newLesson=()=>{const c=C();if(!c)return ACT.classes();
   modal(`<h2>Жаңа сабақ · ${esc(c.name)}</h2>
    <label class="fl">Сабақтың негізі<select id="nlS">${opts}</select></label>
    <div id="nlB"><div class="fl" style="margin-bottom:4px">Әр кезеңге қанша балл</div>
-     <div class="mins">${ST4.map((n,i)=>`<label class="fl" style="font-weight:500">${esc(n)}<input type="number" min="0" max="20" step="1" inputmode="numeric" data-bp="${i}" value="${ST4P[i]}"></label>`).join('')}</div>
+     <div class="mins">${ST4.map((n,i)=>`<label class="fl" style="font-weight:500">${esc(n.split(' | ')[0])}<input type="number" min="0" max="20" step="1" inputmode="numeric" data-bp="${i}" value="${ST4P[i]}"></label>`).join('')}</div>
      <div class="sum" id="nlSum"></div>
      <p class="mut sm" style="margin:6px 0 0">Әр 2 балл — бір дескриптор (0 / 1 / 2). Тақ сан болса, соңғы дескриптор 0 / 1. 0 балл — кезең баллсыз.</p></div>
    <label class="fl" style="margin-top:10px">Күні<input type="date" id="nlD" value="${today()}"></label>
@@ -662,6 +700,18 @@ async function restore(e){const f=e.target.files[0];if(!f)return;e.target.value=
     save();render();toast('Деректер қалпына келтірілді')}catch(err){toast('Бұл көшірме файлы емес')}}
 /* ---------- i18n: kk (source) → ru / en, applied to UI text only ---------- */
 const I18=[
+['Қайталау','Повторение','Review'],['Жаңа тақырып','Новая тема','New topic'],['Талқылау','Обсуждение','Discussion'],
+['Тақырыбы мен күні','Тема и дата','Topic and date'],['Қосымша','Ещё','More'],
+['Қорытынды мен рефлексия: «Бүгін нені түсіндім? Қай тұста қиналдым?»','Итог и рефлексия: «Что я сегодня понял? Где было трудно?»','Summary and reflection: “What did I understand today? Where was it hard?”'],
+['ҚМЖ бойынша: «Қайталау» мен «Жаңа тақырып» — Сабақтың басы, «Талқылау» мен «Бекіту» — Сабақтың ортасы.','По ҚМЖ: «Повторение» и «Новая тема» — начало урока, «Обсуждение» и «Закрепление» — середина урока.','In the lesson plan: “Review” and “New topic” are the lesson start, “Discussion” and “Consolidation” are the lesson middle.'],
+['Балл қойылмайды: тапсырма өткізілмеді','Баллы не ставятся: задание не проводилось','No points: this task was not held'],['Тапсырманы қайтару','Вернуть задание','Restore task'],
+['Тапсырма өткізілмеді ме?','Задание не проводилось?','Task not held?'],['Тапсырма өткізілмеді','Задание не проводилось','Task not held'],['Бұл тапсырмада балл жоқ','В этом задании нет баллов','This task has no points'],
+['Бұл тапсырма бойынша барлық оқушы тексерілді','По этому заданию проверены все ученики','All students are checked for this task'],['Тапсырма','Задание','Task'],
+['Сабақ туралы','Об уроке','About the lesson'],['Оқу мақсатының коды','Код цели обучения','Learning objective code'],['Оқу мақсаты','Цель обучения','Learning objective'],['Сабақтың мақсаты','Цель урока','Lesson goal'],
+['Сабақтың тақырыбы','Тема урока','Lesson topic'],['Тақырыбы','Тема','Topic'],['Сабақтың барысы','Ход урока','Lesson flow'],['Сабақтың кезеңі / уақыт','Этап урока / время','Stage / time'],
+['Педагогтің әрекеті','Действия педагога','Teacher actions'],['Оқушының әрекеті','Действия ученика','Student actions'],['Бағалау','Оценивание','Assessment'],['Ресурстар','Ресурсы','Resources'],
+['Өңдеу','Изменить','Edit'],['Кезеңдердің уақыты, мин','Время этапов, мин','Stage time, min'],['Сабақтың максимумы','Максимум урока','Lesson maximum'],['уақыты','время','time'],['мин','мин','min'],
+['Жоспар мен критерийлер','План и критерии','Plan and criteria'],['тақырыпсыз','без темы','no topic'],['Сабақтың соңы','Конец урока','Lesson end'],
 ['⌂ Басты','⌂ Главная','⌂ Home'],['Басты мәзір','Главное меню','Main menu'],['Басты','Главная','Home'],
 ['Бағалауды жалғастыру','Продолжить оценивание','Continue grading'],
 ['BilimClass үшін нәтижелер','Итоги для BilimClass','Results for BilimClass'],['Нәтижелерге оралу','Назад к итогам','Back to results'],['Нәтижелер','Итоги','Results'],
