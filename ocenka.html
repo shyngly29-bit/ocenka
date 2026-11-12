@@ -4,7 +4,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <style>
-/* Layout: sticky top bar (class/date/topic/Нәтижелер) + 3 ҚМЖ stage tabs + task chips; desktop = student list left, card right; phone = list or card with sticky header and bottom navigation */
+/* Layout: «Басты» home screen; work screen = sticky bar (⌂ Басты · class · 3 stages) + list | card on desktop, list ↔ card with fixed bottom bar on phone */
 :root{--bg:#eef1f5;--card:#fff;--tx:#16202c;--mut:#5b6878;--line:#d8dee6;--ac:#1f5fd1;--acs:#e7eefb;
 --ok:#16733a;--oks:#e3f3e8;--warn:#8a5300;--warns:#fff2dc;--bad:#b42318;--bads:#fdecea;
 --f:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color-scheme:light;--toph:0px}
@@ -14,98 +14,114 @@ html,body{margin:0}
 body{background:var(--bg);color:var(--tx);font:15px/1.4 var(--f);-webkit-tap-highlight-color:transparent}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--card)}
 .g{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-button,label.btn{font:inherit;font-weight:600;color:var(--tx);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:42px;cursor:pointer;text-align:center}
+button,label.btn{font:inherit;font-weight:600;color:var(--tx);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:44px;cursor:pointer;text-align:center}
 button:focus-visible,label.btn:focus-within,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
-button:disabled{opacity:.45;cursor:default}
+button:disabled{opacity:.4;cursor:default}
 .pri{background:var(--ac);border-color:var(--ac);color:#fff}
 .link{border:0;background:none;color:var(--ac);padding:4px 2px;min-height:0;font-weight:600}
 input[type=text],input[type=date],input[type=search],input[type=number],textarea,select{font:inherit;color:var(--tx);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%}
 input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
 .mut{color:var(--mut)}.sm{font-size:13px}
-/* top */
+/* work bar */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--card);border-bottom:1px solid var(--line);padding-block:8px}
-.trow{display:flex;gap:8px;align-items:center}
-.tinfo{flex:1;min-width:0;display:flex;gap:8px;flex-wrap:wrap}
-.tinfo button{border:0;background:var(--bg);text-align:left;min-height:38px;padding:7px 10px;max-width:100%;overflow-wrap:anywhere}
-.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+.trow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#bHome{flex:none}
+.cls{font-weight:700;font-size:16px;min-width:0;max-width:30%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;min-width:0}
 .tabs.n4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.tab{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 12px;min-height:46px;text-align:left;min-width:0}
-.tab b{overflow-wrap:anywhere}
-.tab small,.tk small{font-weight:500;color:var(--mut);font-size:12px;font-variant-numeric:tabular-nums}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:4px 8px;min-height:46px;min-width:0}
+.tab b{overflow-wrap:anywhere;line-height:1.2}
+.tab small{font-weight:500;color:var(--mut);font-size:12px}
 .tab.on{background:var(--ac);border-color:var(--ac);color:#fff}.tab.on small{color:#dbe6fb}
-.tasks{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.tk{display:flex;gap:6px;align-items:baseline;padding:5px 10px;min-height:36px;border-radius:99px;text-align:left}
-.tk.on{border-color:var(--ac);background:var(--acs);color:var(--ac);box-shadow:inset 0 0 0 1px var(--ac)}
 /* main */
-.main{display:grid;grid-template-columns:330px minmax(0,1fr);gap:12px;padding-block:12px 0;align-items:start}
+.main{display:grid;grid-template-columns:300px minmax(0,1fr);gap:12px;padding-block:12px;align-items:start}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px}
-.listcol{position:sticky;top:calc(var(--toph) + 12px);max-height:calc(100vh - var(--toph) - 24px);display:flex;flex-direction:column}
-.lhead{display:flex;gap:6px;padding:10px;border-bottom:1px solid var(--line)}
-.lhead button{white-space:nowrap}
-#slist{overflow:auto;padding:4px}
-.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;width:100%;text-align:left;border:0;border-radius:8px;background:none;padding:8px 10px;font-weight:400;min-height:48px}
+.listcol{position:sticky;top:calc(var(--toph) + 12px);height:calc(100vh - var(--toph) - 24px);display:flex;flex-direction:column}
+.lhead{display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--line)}
+.lhead button{white-space:nowrap;min-height:40px}
+#slist{overflow:auto;padding:4px;position:relative;flex:1}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;width:100%;text-align:left;border:0;border-radius:8px;background:none;padding:7px 10px;font-weight:400;min-height:46px}
 .srow+.srow{margin-top:2px}
 .srow .nm{font-weight:600;overflow-wrap:anywhere}
 .srow .ss{grid-column:1;font-size:13px;color:var(--mut);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.srow .sg{grid-row:1/3;grid-column:2;align-self:center;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
-.srow.on{background:var(--acs);box-shadow:inset 3px 0 0 var(--ac)}
+.srow .sg{grid-row:1/3;grid-column:2;align-self:center;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.srow.on{background:var(--acs);box-shadow:inset 4px 0 0 var(--ac)}
 .dot{width:8px;height:8px;border-radius:50%;background:#b8c1cc;flex:none}
 .s-draft .dot{background:#e09a1a}.s-done .dot{background:var(--ok)}.s-abs .dot{background:#8a94a3}
 .s-abs .nm{color:var(--mut)}
 .demo{margin:8px 10px;padding:8px 10px;background:var(--warns);color:var(--warn);border-radius:8px;font-size:13px}
 .cardcol{min-width:0}
-.card{padding:4px 14px 14px}
-.chead{position:sticky;top:var(--toph);z-index:5;background:var(--card);border-radius:12px 12px 0 0;padding:10px 14px;border-bottom:1px solid var(--line)}
-.crow{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
-.chead h2{margin:0 0 3px;font-size:19px;line-height:1.25;overflow-wrap:anywhere}
-.tot{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
-.tot .big{font-size:24px;font-weight:700;line-height:1.1}
-.tot small{font-size:13px;color:var(--mut);font-weight:600;display:block}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--bg);color:var(--mut)}
-.chip.s-draft{background:var(--warns);color:var(--warn)}.chip.s-done{background:var(--oks);color:var(--ok)}.chip.s-zero{background:var(--bads);color:var(--bad)}
-.cact{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
-.cact button{min-height:34px;padding:5px 10px;font-size:13px}
-.cact .bdb.on{border-color:var(--ac);color:var(--ac);background:var(--acs)}
+.card{padding:12px 14px 14px}
+.chd{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.chd h2{margin:0;font-size:20px;line-height:1.25;overflow-wrap:anywhere}
+.tot{white-space:nowrap;font-variant-numeric:tabular-nums;line-height:1}
+.tot b{font-size:28px}.tot span{font-size:16px;color:var(--mut);font-weight:600}
+.meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
 .sp{flex:1}
-.tname{margin:10px 0 2px;font-size:16px}
-.note{color:var(--mut);font-size:14px;margin:0 0 6px;white-space:pre-line}
-.drow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.ib{min-width:44px;padding:0 10px;font-size:18px}
+.chip{display:inline-flex;align-items:center;font-size:13px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--bg);color:var(--mut)}
+.chip.s-draft{background:var(--warns);color:var(--warn)}.chip.s-done{background:var(--oks);color:var(--ok)}.chip.s-zero{background:var(--bads);color:var(--bad)}
+.tsel{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.tsel button{min-height:38px;padding:5px 12px;border-radius:99px;font-size:14px}
+.tsel button small{font-weight:500;color:var(--mut);margin-left:4px;font-variant-numeric:tabular-nums}
+.tsel button.on{border-color:var(--ac);background:var(--acs);color:var(--ac);box-shadow:inset 0 0 0 1px var(--ac)}
+.tone{margin-top:10px;font-size:14px}.tone small{color:var(--mut);margin-left:6px}
+.drow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);margin-top:8px}
+.drow+.drow{margin-top:0}
 .drow.kf{box-shadow:-14px 0 0 -10px var(--ac)}
-.dt{overflow-wrap:anywhere}
-.dt .ds{display:block;font-size:13px;color:var(--mut);margin-top:3px}
+.dt{overflow-wrap:anywhere;display:flex;gap:6px;align-items:flex-start}
+.dt>span{flex:1}
+.dt .ds{display:block;font-size:12px;color:var(--mut);margin-top:2px}
 .dt .ds.set{color:var(--ok);font-weight:600}
-.lvtxt{margin-top:6px;font-size:13px;background:var(--bg);border-radius:8px;padding:8px 10px}
+.ii{min-height:30px;min-width:30px;padding:0;border-radius:50%;font-size:13px;color:var(--ac);flex:none}
+.lvtxt{grid-column:1/-1;font-size:13px;background:var(--bg);border-radius:8px;padding:8px 10px}
 .lvtxt div+div{margin-top:4px}
-.lvs{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-.lv{min-width:52px;min-height:52px;font-size:19px;font-weight:700;border-width:1.5px;padding:0 10px}
+.lvs{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+.lv{min-width:56px;min-height:52px;font-size:20px;font-weight:700;border-width:1.5px;padding:0 10px}
 .lv.on{background:var(--ac);border-color:var(--ac);color:#fff;box-shadow:0 0 0 3px var(--acs)}
-.clr{min-width:42px;min-height:42px;padding:0;color:var(--mut)}
-.fbk{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
-.fbk summary{cursor:pointer;font-weight:600}
-.phr{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.phr button{font-weight:500;font-size:13px;min-height:34px;padding:5px 10px;text-align:left}
-.kact{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:8px}
-.kact div+div{margin-top:6px}
-.nav{position:sticky;bottom:0;z-index:6;display:flex;gap:8px;background:var(--bg);padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
-.nav button{flex:1;min-height:50px;line-height:1.15}
-.keys{font-size:12px;color:var(--mut);padding:0 2px 10px}
+.clr{min-width:40px;min-height:40px;padding:0;color:var(--mut);border-style:dashed}
+.nob{margin:12px 0 4px;padding:12px;background:var(--bg);border-radius:10px;font-weight:600;color:var(--mut)}
+.absn{margin-top:12px;padding:12px;background:var(--bg);border-radius:10px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.nextd{margin-top:12px;display:flex;gap:8px}
+.nextd .pri{flex:1;min-height:52px;font-size:17px}
+.more{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+.more summary{cursor:pointer;font-weight:600;padding:6px 0;color:var(--ac)}
+.mbody{display:grid;gap:10px;padding-top:6px}
+.note{color:var(--mut);font-size:14px;margin:0;white-space:pre-line}
+.phr{display:flex;flex-wrap:wrap;gap:6px}
+.phr button{font-weight:500;font-size:13px;min-height:36px;padding:5px 10px;text-align:left}
+.mact{display:flex;flex-wrap:wrap;gap:6px}.mact button{font-size:14px;min-height:40px}
+.keys{font-size:12px;color:var(--mut)}
 .empty{padding:28px 16px;text-align:center;color:var(--mut)}
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:35;display:grid;grid-template-columns:1fr 1.6fr;gap:8px;background:var(--card);border-top:1px solid var(--line);
+  padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mbar button{min-height:52px;font-size:16px}
 @media (max-width:899px){
-  .main{grid-template-columns:minmax(0,1fr)}
-  .listcol{position:static;max-height:none}
+  .main{grid-template-columns:minmax(0,1fr);padding-block:10px}
+  .listcol{position:static;height:auto}
+  #slist{overflow:visible}
   .v-card .listcol,.v-list .cardcol{display:none}
-  .keys,.only-d{display:none}
-  .tab{min-height:40px;padding:5px 8px}
-  .tabs.n4{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .tinfo{flex-wrap:nowrap}
-  .tinfo button{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
-  #bClass{flex:0 0 auto;max-width:40%}.lbl{display:none}
-  .nav button{min-width:0;padding:6px 8px;font-size:14px}
-  .chead{position:static}
-  .cact button{min-height:32px;padding:4px 8px}
+  .v-card{padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+  .only-d,.keys{display:none}
+  .tabs{flex-basis:100%;order:3}
+  .cls{max-width:none;flex:1}
+  .card{padding:10px 12px 12px}
 }
-@media (min-width:900px){.only-m{display:none}}
-@media (max-width:520px){.drow{grid-template-columns:minmax(0,1fr)}.lvs{justify-content:flex-start}.lv{flex:1}.tab small{font-size:11px}}
+@media (min-width:900px){.mbar{display:none!important}}
+@media (max-width:420px){.drow{grid-template-columns:minmax(0,1fr)}.lvs{justify-content:stretch}.lv{flex:1}.tab small{font-size:11px}}
+/* home */
+.home{padding-block:16px 32px}
+.hwrap{max-width:860px;margin:0 auto;display:grid;gap:12px}
+.hwrap h1{margin:0;font-size:24px}
+.hc{padding:14px}
+.hc h2{margin:0 0 8px;font-size:16px}
+.hl{margin:2px 0 10px;overflow-wrap:anywhere}
+.big{display:flex;flex-direction:column;align-items:flex-start;width:100%;min-height:64px;font-size:18px;padding:10px 16px;text-align:left}
+.big small{font-weight:500;font-size:13px;color:#dbe6fb;margin-top:2px;overflow-wrap:anywhere}
+.hbtns{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border-radius:99px;min-height:40px}
+.chips button.on{border-color:var(--ac);background:var(--acs);color:var(--ac);box-shadow:inset 0 0 0 1px var(--ac)}
 /* modal */
 .ov{position:fixed;inset:0;z-index:50;background:rgba(15,23,35,.45);display:flex;align-items:flex-end;justify-content:center}
 #ovQ{z-index:60}
@@ -136,22 +152,18 @@ td details summary{cursor:pointer;color:var(--ac);font-size:13px}
 .kmzh th{background:var(--bg);color:var(--tx)}
 .mins{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 ol.pv{margin:8px 0;padding-left:28px;max-height:40vh;overflow:auto}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--tx);color:#fff;padding:10px 16px;border-radius:99px;z-index:70;font-weight:600;max-width:90vw;text-align:center}
+.lvtxt.hlp{grid-column:auto}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--tx);color:#fff;padding:10px 16px;border-radius:99px;z-index:70;font-weight:600;max-width:90vw;text-align:center}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
+<div class="home g" id="home" hidden></div>
 <header class="top g" id="top">
   <div class="trow">
-    <div class="tinfo">
-      <button id="bClass" title="Сынып"></button>
-      <button id="bLesson" title="Сабақ: күні мен тақырыбы"></button>
-    </div>
-    <button id="bRes" class="pri">Нәтижелер</button>
-    <button id="bKmzh" class="only-d" title="Сабақтың толық жоспары">ҚМЖ</button>
-    <button id="bMenu" aria-label="Мәзір">☰</button>
+    <button id="bHome" aria-label="Басты мәзір">⌂ Басты</button>
+    <span class="cls" id="clsName"></span>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Сабақ кезеңдері"></div>
   </div>
-  <div class="tabs" id="tabs"></div>
-  <div class="tasks" id="tasks"></div>
 </header>
 <main class="main g" id="main">
   <section class="listcol panel" aria-label="Оқушылар">
@@ -160,6 +172,7 @@ ol.pv{margin:8px 0;padding-left:28px;max-height:40vh;overflow:auto}
   </section>
   <section class="cardcol" id="cardcol"></section>
 </main>
+<div class="mbar" id="mbar" hidden><button data-act="toList">Оқушылар</button><button class="pri" data-act="next">Келесі →</button></div>
 
 <div class="ov" id="ov" hidden><div class="md" id="md"></div></div>
 <div class="ov" id="ovQ" hidden><div class="md">
@@ -361,7 +374,9 @@ function fixUi(){D.ui.taskBy=D.ui.taskBy||{};if(!C())D.ui.cid=D.classes[0]&&D.cl
 function order(){const c=C();if(!c)return[];const a=c.students.slice();if(D.ui.sort==='az')a.sort((x,y)=>cmp(x.n,y.n));return a}
 
 /* ---------- ui helpers ---------- */
-let undoSt=[],openInfo=new Set(),kRow=0,rowIds=[],q='';
+let undoSt=[],openInfo=new Set(),openMore=false,kRow=0,rowIds=[],q='',listScroll=0;
+const isM=()=>innerWidth<900;
+const stS=s=>s.short!==s.name?s.short:s.name.replace(/^сабақтың\s+/i,'').replace(/^./,c=>c.toUpperCase());
 function toast(m){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2300)}
 function modal(html,wide){$('md').className='md'+(wide?' wide':'');$('md').innerHTML=html;$('ov').hidden=false;$('md').scrollTop=0}
 function closeModal(){$('ov').hidden=true}
@@ -371,72 +386,75 @@ $('ov').addEventListener('click',e=>{if(e.target.id==='ov')closeModal()});
 
 /* ---------- render ---------- */
 function render(){fixUi();const c=C(),L=Lz();
-  $('bClass').innerHTML=c?`<span class="lbl">Сынып: </span><b>${esc(c.name)}</b>`:'Сынып құру';
-  $('bLesson').innerHTML=L?`${fmtD(L.date)} · <b>${esc(L.topic||'Тақырып жазылмаған')}</b>`:'Сабақ құру';
+  if(!L)D.ui.screen='home';const home=D.ui.screen==='home';
+  $('home').hidden=!home;$('top').hidden=home;$('main').hidden=home;$('mbar').hidden=home||D.ui.view!=='card';
+  if(home)return renderHome(c,L);
+  $('clsName').textContent=c.name;$('clsName').title='Сынып: '+c.name;
   $('bSort').textContent=D.ui.sort==='az'?'А–Я':'Тізім бойынша';$('bSort').title='Жұмыс экранындағы рет. Нәтижелерге әсер етпейді';
   renderTabs(L);renderList(c,L);renderCard(c,L);
   $('main').className='main g '+(D.ui.view==='card'?'v-card':'v-list');
   requestAnimationFrame(()=>document.documentElement.style.setProperty('--toph',$('top').offsetHeight+'px'))}
-function progress(L,s,t){const c=C(),pres=c.students.filter(p=>!L.absent[p.id]);
-  return{done:pres.filter(p=>{const r=tRes(L,p.id,t);return r.n===r.all}).length,n:pres.length}}
-function renderTabs(L){const t=$('tabs'),tk=$('tasks');if(!L){t.innerHTML=tk.innerHTML='';return}const cur=curStage(L);
-  t.className='tabs'+(L.stages.length===4?' n4':'');
-  t.innerHTML=L.stages.map(s=>{const m=sActMax(L,s);const sub=[s.time?s.time+' мин':'',L.skip[s.id]?'өткізілмеді':m?m+' балл':'баллсыз'].filter(Boolean).join(' · ');
-    return `<button class="tab${s===cur?' on':''}" data-stage="${s.id}" aria-pressed="${s===cur}" title="${esc(s.name)}"><b>${esc(s.short)}</b><small>${sub}</small></button>`}).join('');
-  const ct=curTask(L,cur);
-  tk.innerHTML=cur.tasks.map(x=>{let sub;if(L.skip[x.id]||L.skip[cur.id])sub='өткізілмеді';else if(!tMax(x))sub='баллсыз';else{const p=progress(L,cur,x);sub=`Тексерілді: ${p.done}/${p.n}`}
-    return `<button class="tk${x===ct?' on':''}" data-task="${x.id}" aria-pressed="${x===ct}" title="${esc(x.full||x.name)}"><b>${esc(x.name)}</b><small>${sub}</small></button>`}).join('')}
-function renderList(c,L){const el=$('slist');
-  if(!c){el.innerHTML='<div class="empty">Сынып құрыңыз: ☰ → Сыныптар мен тізімдер</div>';return}
+function progress(L,t){const c=C(),pres=c.students.filter(p=>!L.absent[p.id]);
+  return `${pres.filter(p=>{const r=tRes(L,p.id,t);return r.n===r.all}).length}/${pres.length}`}
+function renderHome(c,L){const s=c&&L&&c.students.find(x=>x.id===D.ui.sid),st=L&&curStage(L),t=L&&curTask(L,st);
+  const ls=c?D.lessons.filter(l=>l.cid===c.id).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created).slice(0,5):[];
+  $('home').innerHTML=`<div class="hwrap"><h1>Басты</h1>
+   <section class="panel hc">${L?`<div class="mut sm">Ағымдағы сабақ</div><div class="hl"><b>${esc(c.name)}</b> · ${fmtD(L.date)} · ${esc(L.topic||'тақырыпсыз')}</div>
+     <button class="pri big" data-act="cont">Бағалауды жалғастыру<small>${s?esc(s.n)+' · ':''}${esc(stS(st))}${t?' · '+esc(t.name):''}</small></button>`
+     :`<p class="mut" style="margin-top:0">${c?'Бұл сыныпта әзірге сабақ жоқ.':'Алдымен сынып құрыңыз.'}</p><button class="pri big" data-act="${c?'newLesson':'classes'}">${c?'Жаңа сабақ':'Сынып құру'}</button>`}
+     ${L?`<div class="hbtns"><button data-act="results">Нәтижелер</button><button data-act="kmzh">ҚМЖ</button><button data-act="lessonInfo">Тақырып, күні, уақыт</button></div>`:''}</section>
+   <section class="panel hc"><h2>Сынып</h2><div class="chips">${D.classes.map(k=>`<button class="${k===c?'on':''}" data-act="pickC" data-id="${k.id}" aria-pressed="${k===c}">${esc(k.name)} <span class="mut sm">${k.students.length}</span></button>`).join('')}</div>
+     <div class="hbtns"><button data-act="classes">Оқушылар тізімі · импорт</button></div></section>
+   ${c?`<section class="panel hc"><h2>Сабақ</h2><div class="mlist">${ls.map(l=>`<div class="mitem${l.id===D.ui.lid?' on':''}"><button data-act="pickL" data-id="${l.id}">${fmtD(l.date)} · ${esc(l.topic||'тақырыпсыз')} <span class="mut sm">· ${lMax(l)} балл</span></button></div>`).join('')||'<p class="mut">Сабақ жоқ.</p>'}</div>
+     <div class="hbtns"><button data-act="newLesson">Жаңа сабақ</button><button data-act="history">Сабақтар тарихы</button></div></section>`:''}
+   <section class="panel hc"><h2>Баптаулар</h2><div class="hbtns"><button data-act="templates">Шаблондар</button>${L?'<button data-act="editLesson">Осы сабақтың критерийлері</button>':''}<button data-act="backup">Резервтік көшірме</button></div></section></div>`}
+function renderTabs(L){const t=$('tabs'),cur=curStage(L);t.className='tabs'+(L.stages.length===4?' n4':'');
+  t.innerHTML=L.stages.map(s=>{const m=sActMax(L,s);
+    return `<button class="tab${s===cur?' on':''}" role="tab" data-stage="${s.id}" aria-selected="${s===cur}" title="${esc(s.name)}${s.time?' · '+s.time+' мин':''}"><b>${esc(stS(s))}</b><small>${L.skip[s.id]?'өткізілмеді':m?m+' балл':'баллсыз'}</small></button>`}).join('')}
+function renderList(c,L){const el=$('slist'),keep=el.scrollTop;
   if(!c.students.length){el.innerHTML='<div class="empty">Сыныпта оқушы жоқ.<br><button class="link" data-act="classes">Тізім қосу</button></div>';return}
-  const pos={};c.students.forEach((s,i)=>pos[s.id]=i+1);const s0=L&&curStage(L),t0=L&&curTask(L,s0),qq=q.trim().toLowerCase();
-  el.innerHTML=(c.demo?'<div class="demo">Ойдан шығарылған оқушылармен мысал. Өз сыныбыңыз: ☰ → Сыныптар мен тізімдер.</div>':'')+
+  const pos={};c.students.forEach((s,i)=>pos[s.id]=i+1);const s0=curStage(L),t0=curTask(L,s0),qq=q.trim().toLowerCase();
+  el.innerHTML=(c.demo?'<div class="demo">Ойдан шығарылған оқушылармен мысал. Өз сыныбыңыз: ⌂ Басты → Оқушылар тізімі.</div>':'')+
    order().filter(s=>!qq||s.n.toLowerCase().includes(qq)).map(s=>{
-    let st='none',txt='Сабақ жоқ',sg='';
-    if(L){const r=res(L,s.id);st=r.st;txt=ST_L[st];
-      if(st==='done')sg=`${r.sum}/${r.max}`;else if(st==='draft')sg=`${r.sum}`;
-      if(t0&&tOn(L,s0,t0)&&st!=='abs'){const tr=tRes(L,s.id,t0);txt+=tr.n===tr.all?' · тапсырма ✓':tr.n?' · тапсырма …':''}}
-    return `<button class="srow s-${st}${s.id===D.ui.sid?' on':''}" data-sid="${s.id}" aria-current="${s.id===D.ui.sid}"><span class="nm">${pos[s.id]}. ${esc(s.n)}</span><span class="ss"><i class="dot"></i>${txt}</span><span class="sg">${sg}</span></button>`}).join('')
-   ||'<div class="empty">Ешкім табылмады</div>'}
+    const r=res(L,s.id);let txt=ST_L[r.st],sg=r.st==='done'?`${r.sum}/${r.max}`:r.st==='draft'?String(r.sum):'';
+    if(t0&&tOn(L,s0,t0)&&r.st!=='abs'){const tr=tRes(L,s.id,t0);txt+=tr.n===tr.all?' · ✓':tr.n?' · …':''}
+    return `<button class="srow s-${r.st}${s.id===D.ui.sid?' on':''}" data-sid="${s.id}" aria-current="${s.id===D.ui.sid}"><span class="nm">${pos[s.id]}. ${esc(s.n)}</span><span class="ss"><i class="dot"></i>${txt}</span><span class="sg">${sg}</span></button>`}).join('')
+   ||'<div class="empty">Ешкім табылмады</div>';
+  el.scrollTop=keep}
 function renderCard(c,L){const el=$('cardcol');rowIds=[];
-  if(!c||!L){el.innerHTML=`<div class="panel empty">${c?'Бұл сыныпта әзірге сабақ жоқ.':'Сынып жоқ.'}<div class="btns" style="justify-content:center"><button class="pri" data-act="${c?'newLesson':'classes'}">${c?'Жаңа сабақ':'Сынып құру'}</button></div></div>`;return}
   const s=c.students.find(x=>x.id===D.ui.sid);
   if(!s){el.innerHTML='<div class="panel empty">Тізімнен оқушыны таңдаңыз</div>';return}
   const r=res(L,s.id),cur=curStage(L),t=curTask(L,cur),abs=!!L.absent[s.id],pos=c.students.indexOf(s)+1,sr=sRes(L,s.id,cur);
-  const zero=r.st==='done'&&r.sum===0;
-  const tot=abs?'<div class="big">—</div><small>келмеді</small>':`<div class="big">${r.n?r.sum:'—'} / ${r.max}</div><small>${esc(cur.short)}: ${sr.max?`${sr.n?sr.sum:'—'} / ${sr.max}`:'баллсыз'}</small>`;
-  const bd=L.stages.filter(x=>sActMax(L,x)>0).map(x=>{const q=sRes(L,s.id,x);
-    return `<button class="bdb${x===cur?' on':''}" data-stage="${x.id}">${esc(x.short)} ${q.n?q.sum:'—'}/${q.max}${q.n&&q.n<q.all?` · ${q.n} / ${q.all}`:''}</button>`}).join('');
-  let body=`<h3 class="tname">${esc(t?t.name:cur.short)}</h3>${t&&t.full?`<p class="note">${esc(t.full)}</p>`:''}`;
-  const actions=`<div class="kact">${cur.ped?`<div><b>Педагогтің әрекеті:</b> ${esc(cur.ped)}</div>`:''}${cur.stud?`<div><b>Оқушының әрекеті:</b> ${esc(cur.stud)}</div>`:''}</div>`;
-  if(abs)body+=`<p class="note">Оқушы келмеді деп белгіленген. Белгілер сақталады, бірақ қорытындыға кірмейді.</p>`;
-  else if(!t)body+=`<p class="note">Бұл кезеңде тапсырма жоқ.</p>${cur.ped||cur.stud?actions:''}`;
-  else if(L.skip[t.id]||L.skip[cur.id])body+=`<p class="note">Бұл тапсырма осы сабақта өткізілмеді деп белгіленген: ол максимумға және мәртебеге кірмейді.</p><button data-act="skip">Тапсырманы қайтару</button>`;
-  else if(!tMax(t))body+=`<p class="note">Баллсыз тапсырма: белгі қойылмайды, қорытындыға әсер етпейді.</p>${cur.ped||cur.stud?actions:''}`;
+  const zero=r.st==='done'&&r.sum===0,scoredT=t&&tOn(L,cur,t);
+  let h=`<div class="panel card"><div class="chd"><h2>${pos}. ${esc(s.n)}</h2><div class="tot" aria-label="Сабақтың қорытындысы"><b>${abs||!r.n?'—':r.sum}</b><span> / ${r.max}</span></div></div>
+   <div class="meta"><span class="chip s-${zero?'zero':r.st}">${zero?'Қорытынды 0 — тексеріңіз':ST_L[r.st]}</span>${sr.max?`<span class="mut sm">${esc(stS(cur))}: ${sr.n?sr.sum:'—'} / ${sr.max}</span>`:''}<span class="sp"></span>
+   <button class="ib" data-act="undo" title="Соңғы әрекетті болдырмау" aria-label="Соңғы әрекетті болдырмау"${undoSt.length?'':' disabled'}>↶</button></div>`;
+  if(cur.tasks.length>1)h+=`<div class="tsel" role="tablist" aria-label="Тапсырма">${cur.tasks.map(x=>`<button class="${x===t?'on':''}" role="tab" aria-selected="${x===t}" data-task="${x.id}" title="${esc(x.full||x.name)}">${esc(x.name)}<small>${tOn(L,cur,x)?progress(L,x):L.skip[x.id]?'өткізілмеді':'баллсыз'}</small></button>`).join('')}</div>`;
+  else if(t)h+=`<div class="tone"><b>${esc(t.name)}</b>${scoredT?`<small>Тексерілді: ${progress(L,t)}</small>`:''}</div>`;
+  if(abs)h+=`<div class="absn"><span>Келмеді деп белгіленген. Белгілер қорытындыға кірмейді.</span><button data-act="absent">Келді</button></div>`;
+  else if(t&&(L.skip[t.id]||L.skip[cur.id]))h+=`<div class="nob">Балл қойылмайды: тапсырма осы сабақта өткізілмеді</div><button data-act="skip">Тапсырманы қайтару</button>`;
+  else if(!scoredT)h+=`<div class="nob">Балл қойылмайды</div>`;
   else{const m=L.marks[s.id]||{};
-    t.descs.forEach(d=>{const v=m[d.id];rowIds.push(d.id);const k=rowIds.length-1;
-      body+=`<div class="drow${k===kRow?' kf':''}" data-row="${k}"><div class="dt">${esc(d.t)}
-        <button class="link sm" data-info="${d.id}" aria-expanded="${openInfo.has(d.id)}">${openInfo.has(d.id)?'Жасыру':'Деңгейлер'}</button>
-        <span class="ds${v!=null?' set':''}">${v!=null?`Белгіленді: ${v} / ${dmax(d)}`:'Белгіленбеген'}</span>
-        ${openInfo.has(d.id)?`<div class="lvtxt">${d.levels.map(l=>`<div><b>${l.v}</b> — ${esc(l.txt||'—')}</div>`).join('')}</div>`:''}</div>
+    t.descs.forEach(d=>{const v=m[d.id];rowIds.push(d.id);const k=rowIds.length-1,op=openInfo.has(d.id);
+      h+=`<div class="drow${k===kRow?' kf':''}"><div class="dt"><span>${esc(d.t)}<span class="ds${v!=null?' set':''}">${v!=null?`Белгіленді: ${v}`:'Белгіленбеген'}</span></span>
+        <button class="ii" data-info="${d.id}" aria-expanded="${op}" aria-label="Деңгейлердің сипаттамасы" title="Деңгейлер">i</button></div>
         <div class="lvs" role="group" aria-label="Деңгей">${d.levels.map(l=>`<button class="lv${v===l.v?' on':''}" data-lv="${d.id}" data-v="${l.v}" aria-pressed="${v===l.v}" title="${esc(l.txt)}">${l.v}</button>`).join('')}
-        <button class="clr" data-clr="${d.id}" title="Белгіні алу" aria-label="Белгіні алу"${v==null?' disabled':''}>×</button></div></div>`});
-    body+=`<div class="btns" style="justify-content:flex-start"><button class="link sm" data-act="skip" style="flex:0 0 auto">Бұл тапсырма осы сабақта өткізілмеді</button></div>`}
-  if(kRow>=rowIds.length)kRow=0;
-  const phr=abs||!t?[]:t.descs.flatMap(d=>d.fb);const fb=L.fb[s.id]||'';
-  el.innerHTML=`<div class="panel">
-    <div class="chead"><button class="link only-m" data-act="toList" style="margin:-2px 0 4px -2px">← Оқушылар тізімі</button>
-      <div class="crow"><div><h2>${pos}. ${esc(s.n)}</h2><span class="chip s-${zero?'zero':r.st}">${zero?'Қорытынды 0 — тексеріңіз':ST_L[r.st]}</span></div><div class="tot">${tot}</div></div>
-      <div class="cact">${bd}<span class="sp"></span><button data-act="undo"${undoSt.length?'':' disabled'}>↶ Болдырмау</button><button data-act="absent">${abs?'Келді':'Келмеді'}</button></div></div>
-    <div class="card">${body}
-      <details class="fbk"${fb?' open':''}><summary>Кері байланыс (міндетті емес)</summary>
-        ${phr.length?`<div class="phr">${phr.map((p,i)=>`<button data-ph="${i}">${esc(p)}</button>`).join('')}</div>`:''}
-        <textarea id="fbT" rows="2" placeholder="Ауызша берсеңіз, бос қалдыруға болады">${esc(fb)}</textarea></details>
-    </div></div>
-    <div class="nav"><button data-act="prev" aria-label="Алдыңғы оқушы" style="flex:0 0 52px">←</button>
-      <button data-act="nextU">Келесі тексерілмеген</button><button class="pri" data-act="next">Келесі оқушы →</button></div>
-    <div class="keys">Пернелер: ↑↓ дескриптор · 0–9 деңгей · Del белгіні алу · → / N келесі · Shift+N тексерілмеген · ← алдыңғы · [ ] кезең · Ctrl+Z болдырмау · / іздеу</div>`;
-  el._phr=phr}
+        <button class="clr" data-clr="${d.id}" title="Белгіні алу" aria-label="Белгіні алу"${v==null?' disabled':''}>×</button></div>
+        ${op?`<div class="lvtxt">${d.levels.map(l=>`<div><b>${l.v}</b> — ${esc(l.txt||'—')}</div>`).join('')}</div>`:''}</div>`})}
+  h+=`<div class="nextd only-d"><button class="pri" data-act="next">Келесі →</button></div>`;
+  const phr=abs||!t?[]:t.descs.flatMap(d=>d.fb),fb=L.fb[s.id]||'';
+  const bd=L.stages.filter(x=>sActMax(L,x)>0).map(x=>{const q=sRes(L,s.id,x);return `${esc(stS(x))} ${q.n?q.sum:'—'}/${q.max}${q.n&&q.n<q.all?` (${q.n} / ${q.all})`:''}`}).join(' · ');
+  h+=`<details class="more" id="more"${openMore||fb?' open':''}><summary>Қосымша: кері байланыс, келмеді, тапсырма</summary><div class="mbody">
+    ${t&&t.full?`<p class="note"><b>${esc(t.name)}:</b> ${esc(t.full)}</p>`:''}
+    ${!scoredT&&(cur.ped||cur.stud)?`<p class="note">${cur.ped?`<b>Педагогтің әрекеті:</b> ${esc(cur.ped)}\n`:''}${cur.stud?`<b>Оқушының әрекеті:</b> ${esc(cur.stud)}`:''}</p>`:''}
+    <div class="sm"><b>Кезеңдер бойынша:</b> ${bd||'—'}</div>
+    ${phr.length?`<div class="phr">${phr.map((p,i)=>`<button data-ph="${i}">${esc(p)}</button>`).join('')}</div>`:''}
+    <textarea id="fbT" rows="2" aria-label="Кері байланыс" placeholder="Кері байланыс (міндетті емес). Ауызша берсеңіз, бос қалдырыңыз">${esc(fb)}</textarea>
+    <div class="mact"><button data-act="absent">${abs?'Келді':'Келмеді'}</button>${scoredT?'<button data-act="nextU">Келесі тексерілмеген</button><button data-act="skip">Тапсырма өткізілмеді</button>':''}</div>
+    <div class="keys">Пернелер: Tab / Enter · ↑↓ дескриптор · 0–9 деңгей · Del белгіні алу · → / N келесі · Shift+N тексерілмеген · ← алдыңғы · [ ] кезең · Ctrl+Z болдырмау · / іздеу</div>
+  </div></details></div>`;
+  if(kRow>=rowIds.length)kRow=0;el.innerHTML=h;el._phr=phr;
+  $('more').addEventListener('toggle',e=>openMore=e.target.open)}
 
 /* ---------- actions ---------- */
 function setMark(did,v){const L=Lz(),sid=D.ui.sid;const m=L.marks[sid]=L.marks[sid]||{};
@@ -447,7 +465,10 @@ function undo(){const u=undoSt.pop();if(!u)return toast('Болдыратын ә
   if(u.abs!==undefined){if(u.abs)L.absent[u.sid]=true;else delete L.absent[u.sid]}
   else{const m=L.marks[u.sid]=L.marks[u.sid]||{};if(u.prev==null)delete m[u.did];else m[u.did]=u.prev}
   D.ui.lid=L.id;D.ui.sid=u.sid;save();render();toast('Болдырылмады')}
-function go(sid){D.ui.sid=sid;D.ui.view='card';kRow=0;save();render();if(innerWidth<900)scrollTo({top:0})}
+function revealRow(){const c=$('slist'),r=c.querySelector('.srow.on');if(!r||isM())return;
+  if(r.offsetTop<c.scrollTop||r.offsetTop+r.offsetHeight>c.scrollTop+c.clientHeight)c.scrollTop=r.offsetTop-c.clientHeight/2+r.offsetHeight/2}
+function go(sid){if(isM()&&D.ui.view!=='card')listScroll=scrollY;D.ui.sid=sid;D.ui.view='card';kRow=0;save();render();
+  if(isM())scrollTo(0,0);else revealRow()}
 function step(d){const o=order();if(!o.length)return;let i=o.findIndex(s=>s.id===D.ui.sid)+d;
   if(i>=o.length){i=0;toast('Тізім соңы, қайтадан бірінші оқушы')}if(i<0)i=o.length-1;go(o[i].id)}
 function nextUnchecked(){const L=Lz();if(!L)return;const s=curStage(L),t=curTask(L,s);
@@ -456,6 +477,7 @@ function nextUnchecked(){const L=Lz();if(!L)return;const s=curStage(L),t=curTask
   toast('Бұл тапсырма бойынша барлық оқушы тексерілді')}
 function setStage(id){D.ui.stage=id;kRow=0;save();render()}
 function setTask(id){const L=Lz();D.ui.taskBy[curStage(L).id]=id;kRow=0;save();render()}
+function goHome(){D.ui.screen='home';save();render();scrollTo(0,0)}
 
 document.addEventListener('click',async e=>{const t=e.target.closest('button');if(!t)return;const ds=t.dataset;
   if(ds.stage)return setStage(ds.stage);
@@ -467,7 +489,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest('button');i
   if(ds.ph!=null){const p=$('cardcol')._phr[+ds.ph],ta=$('fbT');ta.value=(ta.value.trim()?ta.value.trim()+' ':'')+p;saveFb();ta.focus();return}
   const a=ds.act;if(!a)return;const L=Lz();
   if(a==='next')step(1);else if(a==='prev')step(-1);else if(a==='nextU')nextUnchecked();
-  else if(a==='toList'){D.ui.view='list';save();render()}
+  else if(a==='toList'){D.ui.view='list';save();render();if(isM())scrollTo(0,listScroll)}
   else if(a==='undo')undo();
   else if(a==='absent'){const sid=D.ui.sid;undoSt.push({lid:L.id,sid,abs:!!L.absent[sid]});if(L.absent[sid])delete L.absent[sid];else L.absent[sid]=true;save();render()}
   else if(a==='skip'){const s=curStage(L),tk=curTask(L,s);if(L.skip[tk.id]||L.skip[s.id]){delete L.skip[tk.id];delete L.skip[s.id]}else{if(!await ask('Тапсырма өткізілмеді ме?',`«${tk.name}» осы сабақтың максимумына және барлық оқушының мәртебесіне кірмейді. Қойылған белгілер сақталады.`))return;L.skip[tk.id]=true}save();render()}
@@ -476,17 +498,17 @@ let fbTm=0;function saveFb(){const L=Lz(),v=$('fbT').value;if(v.trim())L.fb[D.ui
 document.addEventListener('input',e=>{if(e.target.id==='fbT'){clearTimeout(fbTm);fbTm=setTimeout(saveFb,400)}
   if(e.target.id==='q'){q=e.target.value;renderList(C(),Lz())}});
 $('bSort').onclick=()=>{D.ui.sort=D.ui.sort==='az'?'list':'az';save();render()};
+$('bHome').onclick=goHome;
 
 document.addEventListener('keydown',e=>{
   if(e.target.closest&&e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
   if(!$('ovQ').hidden||!$('ov').hidden){if(e.key==='Escape'){$('ovQ').hidden?closeModal():$('qNo').click()}return}
-  const L=Lz();if(!L)return;const c=e.code,k=e.key;
+  if(D.ui.screen==='home')return;const L=Lz();if(!L)return;const c=e.code,k=e.key;
   if((e.ctrlKey||e.metaKey)&&c==='KeyZ'){e.preventDefault();return undo()}
   if(e.ctrlKey||e.metaKey||e.altKey)return;
-  if(k==='ArrowDown'||k==='ArrowUp'){if(!rowIds.length)return;e.preventDefault();kRow=(kRow+(k==='ArrowDown'?1:-1)+rowIds.length)%rowIds.length;render();
-    const r=document.querySelector('.drow.kf');r&&r.scrollIntoView({block:'nearest'});return}
+  if(k==='ArrowDown'||k==='ArrowUp'){if(!rowIds.length)return;e.preventDefault();kRow=(kRow+(k==='ArrowDown'?1:-1)+rowIds.length)%rowIds.length;render();return}
   if(/^Digit\d$|^Numpad\d$/.test(c)){const did=rowIds[kRow];if(!did||L.absent[D.ui.sid])return;const v=+c.slice(-1);
-    const s=curStage(L),d=curTask(L,s).descs.find(x=>x.id===did);if(d&&d.levels.some(l=>l.v===v))setMark(did,v);else toast('Мұндай деңгей жоқ');return}
+    const d=curTask(L,curStage(L)).descs.find(x=>x.id===did);if(d&&d.levels.some(l=>l.v===v))setMark(did,v);else toast('Мұндай деңгей жоқ');return}
   if(k==='Delete'||k==='Backspace'){const did=rowIds[kRow];if(did){e.preventDefault();clearMark(did)}return}
   if(k==='ArrowRight'||c==='KeyN'){e.preventDefault();return e.shiftKey?nextUnchecked():step(1)}
   if(k==='ArrowLeft'||c==='KeyP'){e.preventDefault();return step(-1)}
@@ -495,14 +517,10 @@ document.addEventListener('keydown',e=>{
 
 /* ---------- modals ---------- */
 const ACT={};
-ACT.menu=()=>modal(`<h2>Мәзір</h2><div class="mlist">
-  <button data-act="newLesson">Жаңа сабақ</button><button data-act="kmzh">ҚМЖ: сабақтың толық жоспары</button><button data-act="history">Сабақтар тарихы</button>
-  <button data-act="lessonInfo">Сабақ туралы: күні, тақырыбы, мақсаты, уақыты</button><button data-act="editLesson">Осы сабақтың жоспары мен критерийлері</button>
-  <button data-act="classes">Сыныптар мен оқушылар тізімі</button><button data-act="templates">Шаблондар</button>
-  <button data-act="backup">Резервтік көшірме</button></div><div class="btns"><button data-act="close">Жабу</button></div>`);
 ACT.close=closeModal;
-$('bMenu').onclick=ACT.menu;$('bClass').onclick=()=>ACT.classes();$('bLesson').onclick=()=>Lz()?ACT.lessonInfo():ACT.newLesson();$('bRes').onclick=()=>ACT.results();$('bKmzh').onclick=()=>ACT.kmzh();
-
+ACT.cont=()=>{D.ui.screen='work';D.ui.view=D.ui.sid?'card':'list';save();render();scrollTo(0,0);if(!isM())revealRow()};
+ACT.pickC=t=>{D.ui.cid=t.dataset.id;D.ui.lid=null;D.ui.stage=null;undoSt=[];save();render()};
+ACT.pickL=t=>{D.ui.lid=t.dataset.id;D.ui.stage=null;undoSt=[];save();render()};
 ACT.lessonInfo=()=>{const L=Lz();if(!L)return ACT.newLesson();
   modal(`<h2>Сабақ туралы</h2><label class="fl">Күні<input type="date" id="liD" value="${L.date}"></label>
    <label class="fl">Тақырыбы<input type="text" id="liT" value="${esc(L.topic)}"></label>
@@ -671,9 +689,10 @@ async function restore(e){const f=e.target.files[0];if(!f)return;e.target.value=
     if(!await ask('Көшірмеден қалпына келтіру керек пе?','Осы құрылғыдағы деректер файлдағы деректермен ауыстырылады.','Қалпына келтіру'))return;
     if(x.v===3&&Array.isArray(x.classes)){D=x;D.ui=D.ui||{};D.ui.taskBy=D.ui.taskBy||{};upgrade()}else{const keep=D;D=blankDB();if(!migrateOld(x)){D=keep;throw 0}}
     save();render();toast('Деректер қалпына келтірілді')}catch(err){toast('Бұл көшірме файлы емес')}}
-
+const _nl=ACT.nlCreate;ACT.nlCreate=()=>{_nl();D.ui.screen='work';D.ui.view='list';save();render();scrollTo(0,0)};
+ACT.menu=goHome;
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-addEventListener('resize',()=>document.documentElement.style.setProperty('--toph',$('top').offsetHeight+'px'));
-load();render();
+addEventListener('resize',()=>{if(!$('top').hidden)document.documentElement.style.setProperty('--toph',$('top').offsetHeight+'px')});
+load();if(Lz()&&D.ui.screen!=='home'){D.ui.screen='work';if(isM())D.ui.view='list'}render();
 if(D.ui.migrated===1){D.ui.migrated=2;save();toast('Сынып тізімдері көшірілді. Ескі баллдар — «Сабақтар тарихында»')}
 </script>
