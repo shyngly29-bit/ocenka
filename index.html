@@ -32,6 +32,10 @@ button:focus-visible,label.btn:focus-within{outline:2px solid var(--ac);outline-
 input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
 .tools{display:flex;gap:8px;overflow-x:auto;padding-block:8px 2px;scrollbar-width:none}
 main{padding-block:14px 110px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-block:8px 2px;scrollbar-width:none}
+.md .chips{margin-bottom:10px}
+.chip{font-size:13px;padding:7px 11px;border-radius:99px}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .st{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;cursor:pointer;user-select:none;display:flex;flex-direction:column;gap:6px;text-align:left;white-space:normal;font-weight:400}
 .st:active{transform:scale(.97)}
@@ -79,6 +83,7 @@ td.p{color:var(--mut);text-align:right;width:60px}
     <button id="bSort">А→Я</button>
     <button id="bNew">🔄 Новый урок</button>
   </div>
+  <div class="chips" id="stBar"></div>
 </header>
 <main class="wrap"><div id="grid"></div></main>
 <div class="bar"><button id="bRes" class="pri">📋 Итоги для BilimClass</button><button id="bXls">💾 Excel</button></div>
@@ -86,14 +91,15 @@ td.p{color:var(--mut);text-align:right;width:60px}
 <div class="ov" id="ovS" hidden><div class="md">
   <h2 id="sName"></h2>
   <div class="tot"><span>Баллы: <b id="sTot">0</b></span><span id="sGr"></span></div>
+  <div class="chips" id="sStg"></div>
   <div id="sDesc"></div>
   <div class="row"><button data-nav="-1">← Пред.</button><button class="pri" data-close>Готово</button><button data-nav="1">След. →</button></div>
 </div></div>
 
 <div class="ov" id="ovD" hidden><div class="md">
   <h2>Дескрипторы</h2>
-  <p class="hint">Одна строка на дескриптор: <b>описание ; баллы</b>. Например: <i>Правильный ответ ; 2</i></p>
-  <textarea id="dTxt"></textarea>
+  <p class="hint">Строка с <b>#</b> задаёт этап урока. Под ней идут дескрипторы этого этапа, по одному на строку: <b>описание ; баллы</b>.<br>Например: <i># 4. Бекіту</i>, а ниже <i>Тапсырманы дұрыс орындады ; 2</i></p>
+  <textarea id="dTxt" style="min-height:340px"></textarea>
   <div class="row"><button data-close>Отмена</button><button class="pri" id="dSave">Сохранить</button></div>
 </div></div>
 
@@ -147,17 +153,28 @@ td.p{color:var(--mut);text-align:right;width:60px}
 
 <script>
 const KEY='ocenka_v2',$=id=>document.getElementById(id);
-let S={students:[],max:10,mode:'10',thr:[{g:'5',min:9},{g:'4',min:7},{g:'3',min:4},{g:'2',min:1}],desc:[
-  {t:'Правильный ответ',p:2},{t:'Неполный ответ',p:1},{t:'Привёл пример',p:1},
-  {t:'Ответ у доски',p:2},{t:'Помог однокласснику',p:1},{t:'Выполнил задание',p:1}]};
+const DEF_ST=['1. Алдыңғы тақырыпты байланыстыру (сұрау)','2. Жаңа тақырыпқа өту','3. Жаңа тақырыпты талқылау','4. Бекіту'];
+const DEF_DESC=[
+  {t:'Сұраққа толық жауап берді',p:2,st:0},{t:'Жартылай жауап берді',p:1,st:0},{t:'Мысал келтірді',p:1,st:0},
+  {t:'Тақырыпты/мақсатты болжады',p:1,st:1},{t:'Белсенді қатысты',p:1,st:1},
+  {t:'Өз пікірін айтты',p:1,st:2},{t:'Дұрыс тұжырым жасады',p:2,st:2},{t:'Сұрақ қойды',p:1,st:2},
+  {t:'Тапсырманы дұрыс орындады',p:2,st:3},{t:'Тапсырманы жартылай орындады',p:1,st:3},{t:'Тақтада орындады',p:1,st:3}];
+let S={students:[],max:20,mode:'10',thr:[{g:'5',min:17},{g:'4',min:13},{g:'3',min:8},{g:'2',min:1}],
+  stages:DEF_ST.slice(),stage:0,desc:DEF_DESC.map(x=>({...x}))};
+function migrate(){
+  if(!S.stages||!S.stages.length){S.stages=DEF_ST.slice();S.stage=0;S.desc=DEF_DESC.map(x=>({...x}));
+    Object.values(S.classes||{}).forEach(a=>a.forEach(s=>s.c={}));(S.students||[]).forEach(s=>s.c={})}
+  S.desc.forEach(d=>{if(d.st==null||d.st>=S.stages.length)d.st=0});if(!(S.stage<S.stages.length))S.stage=0}
+const stTot=(s,k)=>S.desc.reduce((a,d,i)=>a+(d.st===k?(s.c[i]||0)*d.p:0),0);
+const chips=s=>S.stages.map((n,k)=>`<button class="chip${k===S.stage?' on':''}" data-stg="${k}">${esc(n)}${s?` · <b>${stTot(s,k)}</b>`:''}</button>`).join('');
 const DEMO=['Ахметов Арман','Бекова Айгерим','Жумабаев Нурлан','Касымова Дана','Сериков Алихан','Тулегенова Мадина'];
 let cur=-1,demo=false;
-try{const d=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('ocenka_v1'));if(d&&d.desc)S=Object.assign(S,d)}catch(e){}
+try{const d=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('ocenka_v1'));if(d&&d.desc){if(!d.stages)d.stages=null;S=Object.assign(S,d)}}catch(e){}
 function link(){
   if(!S.classes){S.classes={'Мой класс':S.students||[]};S.cls='Мой класс'}
   if(!S.classes[S.cls]){S.cls=Object.keys(S.classes)[0];if(!S.cls){S.cls='Мой класс';S.classes[S.cls]=[]}}
   S.students=S.classes[S.cls]}
-link();
+link();migrate();
 if(Object.values(S.classes).every(a=>!a.length)){demo=true;S.students=DEMO.map(n=>({n,c:{}}))}
 let ref=null,pushT=0;
 const push=()=>{if(!ref)return;clearTimeout(pushT);pushT=setTimeout(()=>{const {students,...rest}=S;
@@ -165,7 +182,7 @@ const push=()=>{if(!ref)return;clearTimeout(pushT);pushT=setTimeout(()=>{const {
 const save=()=>{if(demo)return;S.t=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}push()};
 (async()=>{try{if(!window.claude?.use)return;const [d,u]=await Promise.all([claude.use('db'),claude.use('user')]);if(!d||!u)return;
   ref=d.doc('data/users/'+(await u.id())+'/state');const sn=await ref.get();
-  if(sn.exists){const x=JSON.parse(sn.data().v);if((x.t||0)>(S.t||0)){S=Object.assign(S,x);link();demo=false;
+  if(sn.exists){const x=JSON.parse(sn.data().v);if((x.t||0)>(S.t||0)){if(!x.stages)x.stages=null;S=Object.assign(S,x);link();migrate();demo=false;
     try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}render()}else if(!demo)push()}
   else if(!demo)push();
   $('cloud').textContent='☁️ сохраняется в аккаунте'}catch(e){}})();
@@ -183,7 +200,7 @@ function ask(t,m){return new Promise(res=>{$('qT').textContent=t;$('qM').textCon
   $('qYes').onclick=()=>{$('ovQ').hidden=true;res(true)};$('qNo').onclick=()=>{$('ovQ').hidden=true;res(false)}})}
 
 function render(){
-  const g=$('grid'),done=S.students.filter(s=>total(s)).length;$('clsName').textContent=S.cls;
+  const g=$('grid'),done=S.students.filter(s=>total(s)).length;$('clsName').textContent=S.cls;$('stBar').innerHTML=chips();
   $('sum').textContent=S.students.length?`Оценено ${done} из ${S.students.length}`:'';
   if(!S.students.length){g.innerHTML='<div class="empty">Список пуст. Загрузите учеников из Excel или Word<br>или введите вручную.</div>';return}
   g.innerHTML=(demo?'<div class="empty" style="grid-column:1/-1;padding:4px 0 6px">Это пример класса. Загрузите свой список, и пример исчезнет.</div>':'')+
@@ -193,7 +210,9 @@ function render(){
 function drawSt(){const s=S.students[cur];
   $('sName').textContent=s.n;$('sTot').textContent=total(s);
   const gr=grade(s);$('sGr').textContent=gr?'Оценка: '+gr:'';
-  $('sDesc').innerHTML=S.desc.map((d,j)=>`<div class="ds"><button class="add" data-add="${j}"><span>${esc(d.t)}</span><i>+${d.p}</i></button><span class="cnt">${s.c[j]||0}×</span><button class="minus" data-sub="${j}" aria-label="Убрать">−</button></div>`).join('');}
+  $('sStg').innerHTML=chips(s);
+  $('sDesc').innerHTML=S.desc.map((d,j)=>d.st!==S.stage?'':`<div class="ds"><button class="add" data-add="${j}"><span>${esc(d.t)}</span><i>+${d.p}</i></button><span class="cnt">${s.c[j]||0}×</span><button class="minus" data-sub="${j}" aria-label="Убрать">−</button></div>`).join('')||'<p class="hint">На этом этапе нет дескрипторов. Добавьте их в ⚙️ Дескрипторы.</p>';}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-stg]');if(!c)return;S.stage=+c.dataset.stg;save();render();if(!$('ovS').hidden)drawSt()});
 function add(j,v){const s=S.students[cur];if(v>0&&total(s)>=S.max)return toast(`Потолок ${S.max} баллов уже набран`);s.c[j]=Math.max(0,(s.c[j]||0)+v);save();drawSt();render()}
 
 $('grid').addEventListener('click',e=>{const b=e.target.closest('.st');if(b){cur=+b.dataset.i;drawSt();show('ovS')}});
@@ -231,11 +250,16 @@ $('file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)re
   catch(err){toast('Не удалось прочитать файл. Сохраните его как .xlsx или .docx')}});
 $('bNames').onclick=()=>{$('nTxt').value=demo?'':S.students.map(s=>s.n).join('\n');show('ovN')};
 $('nSave').onclick=()=>{setNames(clean($('nTxt').value.split('\n')));closeOv()};
-$('bDesc').onclick=()=>{$('dTxt').value=S.desc.map(d=>d.t+' ; '+d.p).join('\n');show('ovD')};
-$('dSave').onclick=()=>{const nd=$('dTxt').value.split('\n').map(l=>{const m=l.split(';');return{t:m[0].trim(),p:parseFloat((m[1]||'1').replace(',','.'))||0}}).filter(d=>d.t);
+$('bDesc').onclick=()=>{$('dTxt').value=S.stages.map((n,k)=>'# '+n+'\n'+S.desc.filter(d=>d.st===k).map(d=>d.t+' ; '+d.p).join('\n')).join('\n\n');show('ovD')};
+$('dSave').onclick=()=>{const st=[],nd=[];
+  $('dTxt').value.split('\n').forEach(l=>{l=l.trim();if(!l)return;
+    if(l[0]==='#'){st.push(l.replace(/^#+\s*/,'')||'Этап '+(st.length+1));return}
+    if(!st.length)st.push('Этап 1');const m=l.split(';');
+    nd.push({t:m[0].trim(),p:parseFloat((m[1]||'1').replace(',','.'))||0,st:st.length-1})});
   if(!nd.length)return toast('Добавьте хотя бы один дескриптор');
-  S.students.forEach(s=>{const byT={};S.desc.forEach((d,i)=>byT[d.t]=s.c[i]);s.c={};nd.forEach((d,i)=>{if(byT[d.t])s.c[i]=byT[d.t]})});
-  S.desc=nd;save();render();closeOv()};
+  const key=(d,arr)=>arr[d.st]+'|'+d.t;
+  Object.values(S.classes).forEach(a=>a.forEach(s=>{const by={};S.desc.forEach((d,i)=>by[key(d,S.stages)]=s.c[i]);s.c={};nd.forEach((d,i)=>{const v=by[key(d,st)];if(v)s.c[i]=v})}));
+  S.desc=nd;S.stages=st;if(S.stage>=st.length)S.stage=0;save();render();closeOv()};
 const cVis=()=>{const c=$('cMode').value==='custom';$('cThrBox').hidden=!c;$('cMaxBox').hidden=c||$('cMode').value==='raw';const m=+$('cMax').value||10;
   if(c&&!$('cThr').value.trim())$('cThr').value=`5 ; ${Math.ceil(m*.85)}\n4 ; ${Math.ceil(m*.65)}\n3 ; ${Math.ceil(m*.4)}\n2 ; 1`};
 $('cMode').onchange=cVis;
@@ -248,16 +272,16 @@ $('bSort').onclick=()=>{S.students.sort((a,b)=>a.n.localeCompare(b.n,'ru'));save
 $('bNew').onclick=async()=>{if(await ask('Новый урок?','Баллы всех учеников обнулятся. Сначала сохраните итоги.')){S.students.forEach(s=>s.c={});save();render()}};
 
 const val=s=>grade(s)||(S.mode==='raw'?String(total(s)):'');
-$('bRes').onclick=()=>{$('rTab').innerHTML=S.students.map((s,i)=>`<tr><td>${i+1}. ${esc(s.n)}</td><td class="p">${total(s)} б.</td><td>${val(s)||'—'}</td></tr>`).join('');show('ovR')};
+$('bRes').onclick=()=>{$('rTab').innerHTML=S.students.map((s,i)=>`<tr><td>${i+1}. ${esc(s.n)}<div class="hint">${S.stages.map((n,k)=>'Э'+(k+1)+': '+stTot(s,k)).join(' · ')}</div></td><td class="p">${total(s)} б.</td><td>${val(s)||'—'}</td></tr>`).join('');show('ovR')};
 async function copy(txt){try{await navigator.clipboard.writeText(txt);toast('Скопировано')}catch(e){$('nTxt').value=txt;closeOv();show('ovN');$('nTxt').select();toast('Выделите текст и скопируйте вручную')}}
 $('rCopyG').onclick=()=>copy(S.students.map(val).join('\n'));
 $('rCopyT').onclick=()=>copy(S.students.map(s=>`${s.n}\t${total(s)}\t${val(s)}`).join('\n'));
 
 let dl=null;(async()=>{try{dl=await window.claude?.use?.('downloads')}catch(e){}})();
 $('bXls').onclick=async()=>{
-  const head=['№','Ученик',...S.desc.map(d=>`${d.t} (${d.p})`),'Баллы','Оценка'];
-  const ws=XLSX.utils.aoa_to_sheet([head,...S.students.map((s,i)=>[i+1,s.n,...S.desc.map((d,j)=>s.c[j]||0),total(s),val(s)])]);
-  ws['!cols']=[{wch:4},{wch:28},...S.desc.map(()=>({wch:14})),{wch:8},{wch:8}];
+  const head=['№','Ученик',...S.desc.map(d=>`${S.stages[d.st]}: ${d.t} (${d.p})`),...S.stages.map(n=>'Итого: '+n),'Баллы','Оценка'];
+  const ws=XLSX.utils.aoa_to_sheet([head,...S.students.map((s,i)=>[i+1,s.n,...S.desc.map((d,j)=>s.c[j]||0),...S.stages.map((n,k)=>stTot(s,k)),total(s),val(s)])]);
+  ws['!cols']=[{wch:4},{wch:28},...S.desc.map(()=>({wch:14})),...S.stages.map(()=>({wch:12})),{wch:8},{wch:8}];
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Итоги');
   const name=`Баллы_${new Date().toLocaleDateString('ru-RU')}.xlsx`;
   if(dl){try{await dl.save({filename:name,data:XLSX.write(wb,{type:'array',bookType:'xlsx'})});toast('Файл сохранён')}
