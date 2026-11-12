@@ -334,7 +334,7 @@ function load(){let raw=null;try{raw=JSON.parse(localStorage.getItem(KEY))}catch
 /* ---------- lessons ---------- */
 function makeLesson(cid,date,topic,src){let P;
   if(src.lesson){const s=D.lessons.find(x=>x.id===src.lesson);P={stages:clone(s.stages),topic:s.topic,code:s.code||'',objective:s.objective||'',goal:s.goal||''}}
-  else{const t=D.templates.find(x=>x.id===src.tpl)||D.templates[0];P=parseTpl(t.txt).T}
+  else{const t=src.txt?{txt:src.txt}:(D.templates.find(x=>x.id===src.tpl)||D.templates[0]);P=parseTpl(t.txt).T}
   const L={id:uid(),cid,date:date||today(),topic:topic||P.topic,code:P.code,objective:P.objective,goal:P.goal,stages:P.stages,marks:{},absent:{},fb:{},skip:{},created:Date.now()};
   D.lessons.push(L);return L}
 const C=()=>D.classes.find(c=>c.id===D.ui.cid);
@@ -508,18 +508,28 @@ ACT.lessonInfo=()=>{const L=Lz();if(!L)return ACT.newLesson();
    <div class="btns"><button data-act="editLesson">Кезеңдер мен дескрипторлар</button><button data-act="close">Бас тарту</button><button class="pri" data-act="liSave">Сақтау</button></div>`)};
 ACT.liSave=()=>{const L=Lz();L.date=$('liD').value||L.date;save();closeModal();render();toast('Сақталды')};
 
+const ST4=['Алдыңғы тақырыпты байланыстыру','Жаңа тақырыпқа өту','Жаңа тақырыпты талқылау','Бекіту'],ST4P=[2,0,4,4];
+function blankTxt(pts){let k=0;return ST4.map((n,i)=>{const p=Math.max(0,Math.min(20,Math.round(+pts[i]||0)));let o=['# '+n],r=p;
+  while(r>0){k++;const top=r>=2?2:1;r-=top;o.push(`- ${k}-дескриптор`,...Array.from({length:top+1},(_,v)=>`  ${v}: `))}return o.join('\n')}).join('\n')}
 ACT.newLesson=()=>{const c=C();if(!c)return ACT.classes();
   const prev=D.lessons.filter(l=>l.cid===c.id).sort((a,b)=>b.created-a.created);
-  const opts=D.templates.map(t=>`<option value="t:${t.id}">Шаблон: ${esc(t.name)}</option>`).join('')+
-    prev.map(l=>`<option value="l:${l.id}">Сабақтың көшірмесі: ${fmtD(l.date)}</option>`).join('');
+  const opts=`<option value="b:">Бос сабақ: баллды өзім қоямын</option>`+D.templates.map(t=>`<option value="t:${t.id}">Шаблон: ${esc(t.name)}</option>`).join('')+
+    prev.map(l=>`<option value="l:${l.id}">Көшірме: ${fmtD(l.date)} (${lMax(l)} балл)</option>`).join('');
   modal(`<h2>Жаңа сабақ · ${esc(c.name)}</h2>
    <label class="fl">Сабақтың негізі<select id="nlS">${opts}</select></label>
-   <label class="fl">Күні<input type="date" id="nlD" value="${today()}"></label>
-   <p class="mut sm">Жаңа сабақ — жеке жазба, бұрынғы сабақтар тарихта сақталады. Көшірме кезеңдер мен дескрипторларды алады, оқушылардың белгілері бос басталады.</p>
+   <div id="nlB"><div class="fl" style="margin-bottom:4px">Әр кезеңге қанша балл</div>
+     <div class="mins">${ST4.map((n,i)=>`<label class="fl" style="font-weight:500">${esc(n)}<input type="number" min="0" max="20" step="1" inputmode="numeric" data-bp="${i}" value="${ST4P[i]}"></label>`).join('')}</div>
+     <div class="sum" id="nlSum"></div>
+     <p class="mut sm" style="margin:6px 0 0">Әр 2 балл — бір дескриптор (0 / 1 / 2). Тақ сан болса, соңғы дескриптор 0 / 1. 0 балл — кезең баллсыз.</p></div>
+   <label class="fl" style="margin-top:10px">Күні<input type="date" id="nlD" value="${today()}"></label>
    <div class="btns"><button data-act="close">Бас тарту</button><button class="pri" data-act="nlCreate">Сабақ құру</button></div>`);
-};
-ACT.nlCreate=()=>{const v=$('nlS').value,src=v[0]==='t'?{tpl:v.slice(2)}:{lesson:v.slice(2)};
-  const L=makeLesson(D.ui.cid,$('nlD').value,'',src);D.ui.lid=L.id;D.ui.stage=null;undoSt=[];save();closeModal();render();toast('Сабақ құрылды')};
+  const upd=()=>{const b=$('nlS').value[0]==='b';$('nlB').hidden=!b;
+    const v=[...document.querySelectorAll('[data-bp]')].map(i=>Math.max(0,Math.round(+i.value||0)));$('nlSum').innerHTML=`Барлығы: <b>${v.reduce((a,x)=>a+x,0)}</b> балл`};
+  $('nlS').onchange=upd;document.querySelectorAll('[data-bp]').forEach(i=>i.oninput=upd);upd()};
+ACT.nlCreate=()=>{const v=$('nlS').value;let src;
+  if(v[0]==='b'){const pts=[...document.querySelectorAll('[data-bp]')].map(i=>i.value);if(!pts.some(x=>+x>0))return toast('Кемінде бір кезеңге балл қойыңыз');src={txt:blankTxt(pts)}}
+  else src=v[0]==='t'?{tpl:v.slice(2)}:{lesson:v.slice(2)};
+  const L=makeLesson(D.ui.cid,$('nlD').value,'',src);D.ui.lid=L.id;D.ui.stage=null;undoSt=[];save();closeModal();render();toast(`Сабақ құрылды: ${lMax(L)} балл`)};
 
 ACT.history=()=>{const c=C();if(!c)return;const ls=D.lessons.filter(l=>l.cid===c.id).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
   const ar=D.archive.filter(a=>a.cid===c.id);
@@ -648,7 +658,7 @@ async function restore(e){const f=e.target.files[0];if(!f)return;e.target.value=
     if(!await ask('Көшірмеден қалпына келтіру керек пе?','Осы құрылғыдағы деректер файлдағы деректермен ауыстырылады.','Қалпына келтіру'))return;
     if(x.v===3&&Array.isArray(x.classes)){D=x;D.ui=D.ui||{};D.ui.taskBy=D.ui.taskBy||{};upgrade()}else{const keep=D;D=blankDB();if(!migrateOld(x)){D=keep;throw 0}}
     save();render();toast('Деректер қалпына келтірілді')}catch(err){toast('Бұл көшірме файлы емес')}}
-const _nl=ACT.nlCreate;ACT.nlCreate=()=>{_nl();D.ui.screen='work';D.ui.view='list';save();render();scrollTo(0,0)};
+const _nl=ACT.nlCreate;ACT.nlCreate=()=>{_nl();if(!$('ov').hidden)return;D.ui.screen='work';D.ui.view='list';save();render();scrollTo(0,0)};
 ACT.menu=goHome;
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 addEventListener('resize',()=>{if(!$('top').hidden)document.documentElement.style.setProperty('--toph',$('top').offsetHeight+'px')});
