@@ -18,6 +18,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{background:var(--bg);color:var(--tx);font:15px/1.4 var(--f);-webkit-tap-highlight-color:transparent}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--card)}
 .g{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -37,7 +38,7 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
 .tabs{flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;min-width:0}
 .tabs.n4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:4px 8px;min-height:46px;min-width:0}
-.tab b{overflow-wrap:anywhere;line-height:1.2}
+.tab b{overflow-wrap:normal;word-break:normal;hyphens:none;line-height:1.15;text-align:center}
 .tab small{font-weight:500;color:var(--mut);font-size:12px}
 .tab.on{background:var(--ac);border-color:var(--ac);color:#fff}.tab.on small{color:#dbe6fb}
 /* main */
@@ -46,7 +47,7 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
 #slist>.demo,#slist>.empty{grid-column:1/-1;margin:0}
 .tile{aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:space-between;align-items:stretch;text-align:left;padding:7px 8px;border-radius:14px;border:1.5px solid var(--line);min-height:0;min-width:0;font-weight:400;gap:2px}
 .tile .tno{font-size:12px;color:var(--mut);font-weight:600;font-variant-numeric:tabular-nums}
-.tile .tn{font-weight:600;font-size:14px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.tile .tn{font-weight:600;font-size:clamp(12px,3.7vw,14px);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:normal;word-break:normal}
 .tile .tv{font-size:22px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;display:flex;justify-content:space-between;align-items:baseline;gap:4px}
 .tile .tv small{font-size:11px;font-weight:600;color:var(--mut)}
 .tile.has{background:#f5f8ff}
@@ -125,7 +126,8 @@ input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
   .cls{max-width:none;flex:1}
   .card{padding:10px 12px 12px}
 }
-@media (max-width:420px){.drow{grid-template-columns:minmax(0,1fr)}.lvs{justify-content:stretch}.lv{flex:1}.tab small{font-size:11px}}
+@media (max-width:420px){#slist{gap:6px;padding:6px}.tile{padding:6px}.tile .tno{font-size:11px}.tile .tv{font-size:19px}.tab{padding:4px 4px}.tab b{font-size:13px}.tab small{font-size:11px}.tabs{gap:4px}.meta .chip{font-size:12px}
+.drow{grid-template-columns:minmax(0,1fr)}.lvs{justify-content:stretch}.lv{flex:1}.tab small{font-size:11px}}
 /* home */
 .home{padding-block:16px 32px}
 .hwrap{max-width:860px;margin:0 auto;display:grid;gap:12px}
@@ -400,7 +402,7 @@ function renderCard(c,L){const el=$('cardcol');rowIds=[];
   const r=res(L,s.id),cur=curStage(L),t=curTask(L,cur),abs=!!L.absent[s.id],pos=c.students.indexOf(s)+1,sr=sRes(L,s.id,cur);
   const zero=r.st==='done'&&r.sum===0,scoredT=t&&tOn(L,cur,t);
   let h=`<div class="panel card"><div class="chd"><h2>${pos}. ${esc(s.n)}</h2><div class="tot" aria-label="Сабақтың қорытындысы"><b>${abs||!r.n?'—':r.sum}</b><span> / ${r.max}</span></div></div>
-   <div class="meta"><span class="chip s-${zero?'zero':r.st}">${zero?'Қорытынды 0 — тексеріңіз':ST_L[r.st]}</span>${sr.max?`<span class="mut sm">${esc(stS(cur))}: ${sr.n?sr.sum:'—'} / ${sr.max}</span>`:''}<span class="sp"></span>
+   <div class="meta"><span class="chip s-${zero?'zero':r.st}">${zero?'Қорытынды 0 — тексеріңіз':ST_L[r.st]}</span>${sr.max?`<span class="mut sm">Кезең: ${sr.n?sr.sum:'—'} / ${sr.max}</span>`:''}<span class="sp"></span>
    <button class="ib" data-act="undo" title="Соңғы әрекетті болдырмау" aria-label="Соңғы әрекетті болдырмау"${undoSt.length?'':' disabled'}>↶</button></div>`;
   if(scoredT)h+=`<div class="tone"><small style="margin:0">${esc(stS(cur))} · Тексерілді: ${progress(L,t)}</small></div>`;
   if(abs)h+=`<div class="absn"><span>Келмеді деп белгіленген. Белгілер қорытындыға кірмейді.</span><button data-act="absent">Келді</button></div>`;
