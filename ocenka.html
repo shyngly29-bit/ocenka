@@ -301,8 +301,8 @@ const transfer=r=>r.st==='done'?r.sum:'';
 
 /* ---------- storage ---------- */
 let D;
-const newTpls=()=>[{id:uid(),name:'4 кезең · 9-сынып · Физика · Ньютонның бірінші заңы',txt:NEWTON,kmzh:1},{id:uid(),name:'Бос шаблон: 4 кезең',txt:BLANK,kmzh:1}];
-function blankDB(){return{v:3,kmzh:1,noKmzh:1,st4:1,classes:[],lessons:[],templates:newTpls(),archive:[],ui:{sort:'list',view:'list',taskBy:{}}}}
+const newTpls=()=>[{id:uid(),name:'4 кезең · физика мысалы',txt:NEWTON,kmzh:1},{id:uid(),name:'Бос шаблон: 4 кезең',txt:BLANK,kmzh:1}];
+function blankDB(){return{v:3,kmzh:1,noKmzh:1,st4:1,tn:1,classes:[],lessons:[],templates:newTpls(),archive:[],ui:{sort:'list',view:'list',taskBy:{}}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('Сақталмады: браузер жады қолжетімсіз')}}
 function migrateOld(src){
   if(!src||!src.desc)return false;const cls=src.classes||{'Менің сыныбым':src.students||[]};
@@ -325,8 +325,9 @@ function st4(){if(D.st4)return;D.st4=1;
   D.lessons.forEach(L=>{const old3=L.stages.length===3&&L.stages.every(s=>/^Сабақтың/i.test(s.name));
     const empty=!Object.values(L.marks||{}).some(m=>Object.keys(m).length)&&!Object.keys(L.absent||{}).length;
     if(old3&&empty)L.stages=parseTpl(NEWTON).T.stages})}
+function tplNames(){if(D.tn)return;D.tn=1;D.templates.forEach(t=>{if(t.name==='4 кезең · 9-сынып · Физика · Ньютонның бірінші заңы')t.name='4 кезең · физика мысалы'})}
 function load(){let raw=null;try{raw=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-  if(raw&&raw.v===3&&Array.isArray(raw.classes)){D=raw;D.ui=D.ui||{};D.ui.taskBy=D.ui.taskBy||{};D.archive=D.archive||[];if(!D.templates||!D.templates.length)D.templates=newTpls();upgrade();noKmzh();st4();save();return}
+  if(raw&&raw.v===3&&Array.isArray(raw.classes)){D=raw;D.ui=D.ui||{};D.ui.taskBy=D.ui.taskBy||{};D.archive=D.archive||[];if(!D.templates||!D.templates.length)D.templates=newTpls();upgrade();noKmzh();st4();tplNames();save();return}
   D=blankDB();let old=null;try{old=JSON.parse(localStorage.getItem('ocenka_v2'))||JSON.parse(localStorage.getItem('ocenka_v1'))}catch(e){}
   if(migrateOld(old)){D.ui.cid=D.classes[0].id;D.ui.migrated=1}else seedDemo();save()}
 
@@ -376,12 +377,10 @@ function renderHome(c,L){const s=c&&L&&c.students.find(x=>x.id===D.ui.sid),st=L&
    <section class="panel hc">${L?`<div class="hl"><b>${esc(c.name)}</b> · ${fmtD(L.date)}</div>
      <button class="pri big" data-act="cont">Бағалауды жалғастыру<small>${s?esc(s.n)+' · ':''}${esc(stS(st))}</small></button>`
      :`<p class="mut" style="margin-top:0">${c?'Бұл сыныпта әзірге сабақ жоқ.':'Алдымен сынып құрыңыз.'}</p><button class="pri big" data-act="${c?'newLesson':'classes'}">${c?'Жаңа сабақ':'Сынып құру'}</button>`}
-     ${L?`<div class="hbtns"><button data-act="results">Нәтижелер</button><button data-act="lessonInfo">Күні</button></div>`:''}</section>
+     ${L?`<div class="hbtns"><button data-act="results">Нәтижелер</button><button data-act="newLesson">Жаңа сабақ</button></div>`:''}</section>
    <section class="panel hc"><h2>Сынып</h2><div class="chips">${D.classes.map(k=>`<button class="${k===c?'on':''}" data-act="pickC" data-id="${k.id}" aria-pressed="${k===c}">${esc(k.name)} <span class="mut sm">${k.students.length}</span></button>`).join('')}</div>
      <div class="hbtns"><button data-act="classes">Оқушылар тізімі · импорт</button></div></section>
-   ${c?`<section class="panel hc"><h2>Күндер</h2><div class="mlist">${ls.map(l=>`<div class="mitem${l.id===D.ui.lid?' on':''}"><button data-act="pickL" data-id="${l.id}">${fmtD(l.date)} <span class="mut sm">· ${lMax(l)} балл</span></button></div>`).join('')||'<p class="mut">Сабақ жоқ.</p>'}</div>
-     <div class="hbtns"><button data-act="newLesson">Жаңа сабақ</button><button data-act="history">Сабақтар тарихы</button></div></section>`:''}
-   <section class="panel hc"><h2>Баптаулар</h2><div class="hbtns"><button data-act="templates">Шаблондар</button>${L?'<button data-act="editLesson">Осы сабақтың критерийлері</button>':''}<button data-act="backup">Резервтік көшірме</button></div></section></div>`}
+   <section class="panel hc"><h2>Баптаулар</h2><div class="hbtns"><button data-act="templates">Шаблондар</button><button data-act="backup">Резервтік көшірме</button></div></section></div>`}
 function renderTabs(L){const t=$('tabs'),cur=curStage(L);t.className='tabs'+(L.stages.length===4?' n4':'');
   t.innerHTML=L.stages.map(s=>{const m=sActMax(L,s);
     return `<button class="tab${s===cur?' on':''}" role="tab" data-stage="${s.id}" aria-selected="${s===cur}" title="${esc(s.name)}${s.time?' · '+s.time+' мин':''}"><b>${esc(stS(s))}</b><small>${L.skip[s.id]?'өткізілмеді':m?m+' балл':'баллсыз'}</small></button>`}).join('')}
